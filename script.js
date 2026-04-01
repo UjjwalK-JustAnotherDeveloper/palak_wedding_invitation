@@ -255,7 +255,7 @@ function vpCreateEventTimelineMarkup() {
     '      <path id="vpTimelinePath" d="M0.982 0.982C0.982 16.704 6.951 28.707 16.205 40.759C23.71 50.533 37.43 74.926 45.67 84.464C54.846 95.087 56.964 101.727 56.964 115.893C56.964 124.63 53.603 129.897 45.67 133.571C37.883 137.177 28.23 135.004 24.063 127.188C16.933 113.817 21.783 104.392 30.938 93.795C42.05 80.931 53.124 80.045 68.75 80.045C81.108 80.045 99.246 84.636 108.036 93.795C116.875 100.179 122.255 104.779 129.152 111.964C136.161 119.267 133.067 117.774 139.464 125.223C146.181 133.044 156.221 158.172 159.107 167.946C161.994 177.72 161.529 181.249 164.509 188.08C167.489 194.912 168.929 220.948 168.929 228.348C168.929 240.295 164.602 249.531 159.107 259.777C148.924 278.762 122.068 290.648 103.71 299.151C84.242 308.165 65.053 322.236 61.384 343.259C57.146 367.545 79.299 383.794 103.185 392.091C128.896 401.019 157.847 403.071 184.835 405.321C237.96 409.75 291.65 416.24 343.725 429.049C378.464 437.594 431.124 462.717 439.018 503.839" fill="none" stroke="#9bb7a1" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"></path>',
     '      <g data-role="dots"></g>',
     '      <g id="vpTimelinePlaneGroup" class="vp-event-timeline__plane-group">',
-    '        <image class="vp-event-timeline__plane" href="assets/images/timeline-plane.webp" x="-20" y="-20" width="40" height="40" preserveAspectRatio="xMidYMid meet"></image>',
+    '        <image class="vp-event-timeline__plane" href="assets/images/timeline-plane.webp" x="-22" y="-22" width="44" height="44" preserveAspectRatio="xMidYMid meet"></image>',
     '      </g>',
     '    </svg>',
     '    <div data-role="items"></div>',
@@ -325,6 +325,21 @@ function vpInitEventTimelineAnimation(timeline) {
   var totalLength = path.getTotalLength();
   var rafId = 0;
   var ticking = false;
+  var planeConfig = {
+    width: 44,
+    height: 44,
+    tipX: 44,
+    tipY: 0,
+    tilt: 45
+  };
+  var planeCenter = {
+    x: planeConfig.width / 2,
+    y: planeConfig.height / 2
+  };
+  var planeTipOffset = {
+    x: planeConfig.tipX - planeCenter.x,
+    y: planeConfig.tipY - planeCenter.y
+  };
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -339,7 +354,15 @@ function vpInitEventTimelineAnimation(timeline) {
     var point = path.getPointAtLength(length);
     var nextPoint = path.getPointAtLength(Math.min(totalLength, length + 2));
     var angle = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) * 180 / Math.PI;
-    planeGroup.setAttribute('transform', 'translate(' + point.x + ' ' + point.y + ') rotate(' + angle + ')');
+    var rotation = angle + planeConfig.tilt;
+    var rotationInRadians = rotation * Math.PI / 180;
+    // Keep the image centered, but shift the group's center so the rotated nose stays on the path.
+    var offsetX = planeTipOffset.x * Math.cos(rotationInRadians) - planeTipOffset.y * Math.sin(rotationInRadians);
+    var offsetY = planeTipOffset.x * Math.sin(rotationInRadians) + planeTipOffset.y * Math.cos(rotationInRadians);
+    var centerX = point.x - offsetX;
+    var centerY = point.y - offsetY;
+
+    planeGroup.setAttribute('transform', 'translate(' + centerX + ' ' + centerY + ') rotate(' + rotation + ')');
   }
 
   function setVisibleItems(progress) {
