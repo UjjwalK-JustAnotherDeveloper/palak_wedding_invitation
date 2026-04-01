@@ -328,18 +328,29 @@ function vpInitEventTimelineAnimation(timeline) {
   var planeConfig = {
     width: 44,
     height: 44,
-    tipX: 44,
-    tipY: 0,
-    tilt: 45
+    trackBodyX: 23,
+    trackBodyY: 23,
+    trackTipX: 35,
+    trackTipY: 11
   };
   var planeCenter = {
     x: planeConfig.width / 2,
     y: planeConfig.height / 2
   };
-  var planeTipOffset = {
-    x: planeConfig.tipX - planeCenter.x,
-    y: planeConfig.tipY - planeCenter.y
+  var planeBodyOffset = {
+    x: planeConfig.trackBodyX - planeCenter.x,
+    y: planeConfig.trackBodyY - planeCenter.y
   };
+  var planeTipOffset = {
+    x: planeConfig.trackTipX - planeCenter.x,
+    y: planeConfig.trackTipY - planeCenter.y
+  };
+  var planeGuideVector = {
+    x: planeTipOffset.x - planeBodyOffset.x,
+    y: planeTipOffset.y - planeBodyOffset.y
+  };
+  var planeGuideAngle = Math.atan2(planeGuideVector.y, planeGuideVector.x);
+  var planeGuideLength = Math.sqrt((planeGuideVector.x * planeGuideVector.x) + (planeGuideVector.y * planeGuideVector.y));
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -351,16 +362,16 @@ function vpInitEventTimelineAnimation(timeline) {
 
   function positionPlane(progress) {
     var length = totalLength * progress;
-    var point = path.getPointAtLength(length);
-    var nextPoint = path.getPointAtLength(Math.min(totalLength, length + 2));
-    var angle = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) * 180 / Math.PI;
-    var rotation = angle + planeConfig.tilt;
-    var rotationInRadians = rotation * Math.PI / 180;
-    // Keep the image centered, but shift the group's center so the rotated nose stays on the path.
-    var offsetX = planeTipOffset.x * Math.cos(rotationInRadians) - planeTipOffset.y * Math.sin(rotationInRadians);
-    var offsetY = planeTipOffset.x * Math.sin(rotationInRadians) + planeTipOffset.y * Math.cos(rotationInRadians);
-    var centerX = point.x - offsetX;
-    var centerY = point.y - offsetY;
+    var bodyPoint = path.getPointAtLength(length);
+    var tipPoint = path.getPointAtLength(Math.min(totalLength, length + planeGuideLength));
+    var worldGuideAngle = Math.atan2(tipPoint.y - bodyPoint.y, tipPoint.x - bodyPoint.x);
+    var rotationInRadians = worldGuideAngle - planeGuideAngle;
+    var rotation = rotationInRadians * 180 / Math.PI;
+    // Map the plane's internal body guide onto the dotted path so both the nose and fuselage visually follow it.
+    var offsetX = planeBodyOffset.x * Math.cos(rotationInRadians) - planeBodyOffset.y * Math.sin(rotationInRadians);
+    var offsetY = planeBodyOffset.x * Math.sin(rotationInRadians) + planeBodyOffset.y * Math.cos(rotationInRadians);
+    var centerX = bodyPoint.x - offsetX;
+    var centerY = bodyPoint.y - offsetY;
 
     planeGroup.setAttribute('transform', 'translate(' + centerX + ' ' + centerY + ') rotate(' + rotation + ')');
   }
