@@ -228,22 +228,59 @@ var VP_EVENT_TIMELINE_CONTENT = {
   en: {
     title: 'Event Timeline',
     items: [
-      { text: '16:00 - Wedding Ceremony', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
-      { text: '17:00 - Cocktail Hour', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
-      { text: '19:00 - Dinner', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 },
-      { text: '20:00 - Party', x: '20.85%', y: '64.01%', width: '54.00%', dotX: 58, dotY: 350 }
+      { text: '19Nov 7pm - Sangeet and Cocktail Night', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { text: '20Nov 10am - Haldi', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
+      { text: '20Nov 7pm - Shadi Night', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
     ]
   },
   gu: {
     title: 'ઇવેન્ટ ટાઇમલાઇન',
     items: [
-      { text: '16:00 - લગ્ન વિધિ', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
-      { text: '17:00 - કોકટેલ અવર', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
-      { text: '19:00 - ડિનર', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 },
-      { text: '20:00 - પાર્ટી', x: '20.85%', y: '64.01%', width: '54.00%', dotX: 58, dotY: 350 }
+      { text: '19Nov 7pm - સંગીત અને કોકટેલ નાઇટ', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { text: '20Nov 10am - હળદી', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
+      { text: '20Nov 7pm - શાદી નાઇટ', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
     ]
   }
 };
+
+var VP_EVENT_TIMELINE_VIEWBOX = {
+  width: 440,
+  height: 514
+};
+
+function vpGetEventTimelineStops(count) {
+  if (count <= 1) return [0.36];
+  if (count === 3) return [0.28, 0.43, 0.58];
+
+  var start = 0.14;
+  var end = 0.7;
+  var step = (end - start) / (count - 1);
+
+  return Array.from({ length: count }, function(_, index) {
+    return start + (step * index);
+  });
+}
+
+function vpGetEventTimelineLayout(path, items) {
+  if (!path || !items || !items.length) return [];
+
+  var totalLength = path.getTotalLength();
+  var stops = vpGetEventTimelineStops(items.length);
+
+  return stops.map(function(stop) {
+    var point = path.getPointAtLength(totalLength * stop);
+    var itemLeft = Math.min(point.x + 26, VP_EVENT_TIMELINE_VIEWBOX.width - 150);
+    var itemWidth = Math.max(120, VP_EVENT_TIMELINE_VIEWBOX.width - itemLeft - 14);
+
+    return {
+      dotX: point.x.toFixed(2),
+      dotY: point.y.toFixed(2),
+      itemLeft: ((itemLeft / VP_EVENT_TIMELINE_VIEWBOX.width) * 100).toFixed(2) + '%',
+      itemTop: ((point.y / VP_EVENT_TIMELINE_VIEWBOX.height) * 100).toFixed(2) + '%',
+      itemWidth: ((itemWidth / VP_EVENT_TIMELINE_VIEWBOX.width) * 100).toFixed(2) + '%'
+    };
+  });
+}
 
 function vpCreateEventTimelineMarkup() {
   return [
@@ -282,19 +319,25 @@ function vpEnsureEventTimeline() {
   return timeline;
 }
 
-function vpBuildEventTimelineItems(items) {
+function vpBuildEventTimelineItems(items, layout) {
   return items.map(function(item, index) {
+    var position = layout[index] || {
+      itemLeft: '18%',
+      itemTop: '20%',
+      itemWidth: '60%'
+    };
+
     return [
-      '<article class="vp-event-timeline__item" style="--item-x:', item.x, ';--item-y:', item.y, ';--item-width:', item.width, ';--delay:', (0.1 * index).toFixed(2), 's;">',
+      '<article class="vp-event-timeline__item" style="--item-x:', position.itemLeft, ';--item-y:', position.itemTop, ';--item-width:', position.itemWidth, ';">',
       '  <span class="vp-event-timeline__item-text">', item.text, '</span>',
       '</article>'
     ].join('');
   }).join('');
 }
 
-function vpBuildEventTimelineDots(items) {
-  return items.map(function(item) {
-    return '<circle class="vp-event-timeline__dot" cx="' + item.dotX + '" cy="' + item.dotY + '" r="4"></circle>';
+function vpBuildEventTimelineDots(layout) {
+  return layout.map(function(position) {
+    return '<circle class="vp-event-timeline__dot" cx="' + position.dotX + '" cy="' + position.dotY + '" r="4"></circle>';
   }).join('');
 }
 
@@ -306,10 +349,12 @@ function vpRenderEventTimeline(lang) {
   var title = timeline.querySelector('[data-role="title"]');
   var dots = timeline.querySelector('[data-role="dots"]');
   var items = timeline.querySelector('[data-role="items"]');
+  var path = timeline.querySelector('#vpTimelinePath');
+  var layout = vpGetEventTimelineLayout(path, content.items);
 
   if (title) title.textContent = content.title;
-  if (dots) dots.innerHTML = vpBuildEventTimelineDots(content.items);
-  if (items) items.innerHTML = vpBuildEventTimelineItems(content.items);
+  if (dots) dots.innerHTML = vpBuildEventTimelineDots(layout);
+  if (items) items.innerHTML = vpBuildEventTimelineItems(content.items, layout);
   if (typeof timeline.vpTimelineRefresh === 'function') timeline.vpTimelineRefresh();
 }
 
@@ -376,23 +421,13 @@ function vpInitEventTimelineAnimation(timeline) {
     planeGroup.setAttribute('transform', 'translate(' + centerX + ' ' + centerY + ') rotate(' + rotation + ')');
   }
 
-  function setVisibleItems(progress) {
-    var items = timeline.querySelectorAll('.vp-event-timeline__item');
-    Array.prototype.forEach.call(items, function(item, index) {
-      var threshold = 0.16 + (index * 0.16);
-      item.classList.toggle('is-visible', progress >= threshold);
-    });
-  }
-
   function updateTimeline() {
     ticking = false;
     var rect = timeline.getBoundingClientRect();
     var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
     var rawProgress = (viewportHeight - rect.top) / (viewportHeight + rect.height);
     var progress = ease(clamp(rawProgress, 0, 1));
-    timeline.classList.toggle('is-visible', progress > 0.08);
     positionPlane(progress);
-    setVisibleItems(progress);
   }
 
   function requestTick() {
