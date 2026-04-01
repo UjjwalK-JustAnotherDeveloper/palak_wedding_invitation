@@ -224,6 +224,162 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+var VP_EVENT_TIMELINE_CONTENT = {
+  en: {
+    title: 'Event Timeline',
+    items: [
+      { text: '16:00 - Wedding Ceremony', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { text: '17:00 - Cocktail Hour', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
+      { text: '19:00 - Dinner', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 },
+      { text: '20:00 - Party', x: '20.85%', y: '64.01%', width: '54.00%', dotX: 58, dotY: 350 }
+    ]
+  },
+  gu: {
+    title: 'ઇવેન્ટ ટાઇમલાઇન',
+    items: [
+      { text: '16:00 - લગ્ન વિધિ', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { text: '17:00 - કોકટેલ અવર', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
+      { text: '19:00 - ડિનર', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 },
+      { text: '20:00 - પાર્ટી', x: '20.85%', y: '64.01%', width: '54.00%', dotX: 58, dotY: 350 }
+    ]
+  }
+};
+
+function vpCreateEventTimelineMarkup() {
+  return [
+    '<section class="vp-event-timeline" aria-label="Event Timeline">',
+    '  <h2 class="vp-event-timeline__title" data-role="title"></h2>',
+    '  <div class="vp-event-timeline__canvas">',
+    '    <div class="vp-event-timeline__stage">',
+    '    <svg class="vp-event-timeline__svg" viewBox="0 0 440 514" aria-hidden="true">',
+    '      <path id="vpTimelinePath" d="M0.982 0.982C0.982 16.704 6.951 28.707 16.205 40.759C23.71 50.533 37.43 74.926 45.67 84.464C54.846 95.087 56.964 101.727 56.964 115.893C56.964 124.63 53.603 129.897 45.67 133.571C37.883 137.177 28.23 135.004 24.063 127.188C16.933 113.817 21.783 104.392 30.938 93.795C42.05 80.931 53.124 80.045 68.75 80.045C81.108 80.045 99.246 84.636 108.036 93.795C116.875 100.179 122.255 104.779 129.152 111.964C136.161 119.267 133.067 117.774 139.464 125.223C146.181 133.044 156.221 158.172 159.107 167.946C161.994 177.72 161.529 181.249 164.509 188.08C167.489 194.912 168.929 220.948 168.929 228.348C168.929 240.295 164.602 249.531 159.107 259.777C148.924 278.762 122.068 290.648 103.71 299.151C84.242 308.165 65.053 322.236 61.384 343.259C57.146 367.545 79.299 383.794 103.185 392.091C128.896 401.019 157.847 403.071 184.835 405.321C237.96 409.75 291.65 416.24 343.725 429.049C378.464 437.594 431.124 462.717 439.018 503.839" fill="none" stroke="#9bb7a1" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"></path>',
+    '      <g data-role="dots"></g>',
+    '      <g id="vpTimelinePlaneGroup" class="vp-event-timeline__plane-group">',
+    '        <image class="vp-event-timeline__plane" href="assets/images/timeline-plane.webp" x="-20" y="-20" width="40" height="40" preserveAspectRatio="xMidYMid meet"></image>',
+    '      </g>',
+    '    </svg>',
+    '    <div data-role="items"></div>',
+    '    </div>',
+    '  </div>',
+    '</section>'
+  ].join('');
+}
+
+function vpEnsureEventTimeline() {
+  var rec = document.getElementById('rec2002506421');
+  if (!rec) return null;
+
+  var artboard = rec.querySelector('.t396__artboard');
+  if (!artboard) return null;
+
+  var timeline = artboard.querySelector('.vp-event-timeline');
+  if (!timeline) {
+    artboard.insertAdjacentHTML('beforeend', vpCreateEventTimelineMarkup());
+    timeline = artboard.querySelector('.vp-event-timeline');
+    vpInitEventTimelineAnimation(timeline);
+  }
+
+  return timeline;
+}
+
+function vpBuildEventTimelineItems(items) {
+  return items.map(function(item, index) {
+    return [
+      '<article class="vp-event-timeline__item" style="--item-x:', item.x, ';--item-y:', item.y, ';--item-width:', item.width, ';--delay:', (0.1 * index).toFixed(2), 's;">',
+      '  <span class="vp-event-timeline__item-text">', item.text, '</span>',
+      '</article>'
+    ].join('');
+  }).join('');
+}
+
+function vpBuildEventTimelineDots(items) {
+  return items.map(function(item) {
+    return '<circle class="vp-event-timeline__dot" cx="' + item.dotX + '" cy="' + item.dotY + '" r="4"></circle>';
+  }).join('');
+}
+
+function vpRenderEventTimeline(lang) {
+  var timeline = vpEnsureEventTimeline();
+  if (!timeline) return;
+
+  var content = VP_EVENT_TIMELINE_CONTENT[lang] || VP_EVENT_TIMELINE_CONTENT.en;
+  var title = timeline.querySelector('[data-role="title"]');
+  var dots = timeline.querySelector('[data-role="dots"]');
+  var items = timeline.querySelector('[data-role="items"]');
+
+  if (title) title.textContent = content.title;
+  if (dots) dots.innerHTML = vpBuildEventTimelineDots(content.items);
+  if (items) items.innerHTML = vpBuildEventTimelineItems(content.items);
+  if (typeof timeline.vpTimelineRefresh === 'function') timeline.vpTimelineRefresh();
+}
+
+function vpInitEventTimelineAnimation(timeline) {
+  if (!timeline || timeline.dataset.timelineReady === 'true') return;
+
+  var path = timeline.querySelector('#vpTimelinePath');
+  var planeGroup = timeline.querySelector('#vpTimelinePlaneGroup');
+  if (!path || !planeGroup) return;
+
+  timeline.dataset.timelineReady = 'true';
+
+  var totalLength = path.getTotalLength();
+  var rafId = 0;
+  var ticking = false;
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function ease(progress) {
+    return progress * progress * (3 - 2 * progress);
+  }
+
+  function positionPlane(progress) {
+    var length = totalLength * progress;
+    var point = path.getPointAtLength(length);
+    var nextPoint = path.getPointAtLength(Math.min(totalLength, length + 2));
+    var angle = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) * 180 / Math.PI;
+    planeGroup.setAttribute('transform', 'translate(' + point.x + ' ' + point.y + ') rotate(' + angle + ')');
+  }
+
+  function setVisibleItems(progress) {
+    var items = timeline.querySelectorAll('.vp-event-timeline__item');
+    Array.prototype.forEach.call(items, function(item, index) {
+      var threshold = 0.16 + (index * 0.16);
+      item.classList.toggle('is-visible', progress >= threshold);
+    });
+  }
+
+  function updateTimeline() {
+    ticking = false;
+    var rect = timeline.getBoundingClientRect();
+    var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    var rawProgress = (viewportHeight - rect.top) / (viewportHeight + rect.height);
+    var progress = ease(clamp(rawProgress, 0, 1));
+    timeline.classList.toggle('is-visible', progress > 0.08);
+    positionPlane(progress);
+    setVisibleItems(progress);
+  }
+
+  function requestTick() {
+    if (ticking) return;
+    ticking = true;
+    rafId = window.requestAnimationFrame(updateTimeline);
+  }
+
+  timeline.vpTimelineRefresh = requestTick;
+  positionPlane(0);
+  requestTick();
+  window.addEventListener('scroll', requestTick, { passive: true });
+  window.addEventListener('resize', requestTick);
+
+  window.addEventListener('beforeunload', function() {
+    if (rafId) window.cancelAnimationFrame(rafId);
+    window.removeEventListener('scroll', requestTick);
+    window.removeEventListener('resize', requestTick);
+  });
+}
+
 // Prevent multiple clicks on envelope
 document.addEventListener('DOMContentLoaded', function() {
   const envelope = document.querySelector('[data-elem-id="1773847037346"]');
@@ -381,6 +537,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('#rec2002802231 [field="tn_text_1771277026942000001"]', 'Location');
     setHtml('#rec2002802231 [field="tn_text_1772804808869"]', 'Chateau de Paon');
     setHtml('#rec2002802231 [field="tn_text_1772813480591000001"]', 'Address: Petit Chemin de Saint-Gilles13200 Arles, France');
+    vpRenderEventTimeline('en');
 
     setHtml('#rec2003451831 [field="tn_text_1763405219328"]', 'Dress Code');
     setHtml('#rec2003451831 [field="tn_text_1772813849329000001"]', 'We kindly invite you to dress in elegant attire that reflects the style and spirit of our special day.');
@@ -432,6 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('#rec2002802231 [field="tn_text_1771277026942000001"]', 'સ્થળ');
     setHtml('#rec2002802231 [field="tn_text_1772804808869"]', 'શાતો દ પાઓં');
     setHtml('#rec2002802231 [field="tn_text_1772813480591000001"]', 'સરનામું: Petit Chemin de Saint-Gilles13200 Arles, France');
+    vpRenderEventTimeline('gu');
 
     setHtml('#rec2003451831 [field="tn_text_1763405219328"]', 'ડ્રેસ કોડ');
     setHtml('#rec2003451831 [field="tn_text_1772813849329000001"]', 'અમે નમ્ર વિનંતી કરીએ છીએ કે તમે અમારા વિશેષ દિવસની શૈલી અને ભાવનાને અનુરૂપ સજ્જન અને ભવ્ય વસ્ત્રોમાં પધારો.');
