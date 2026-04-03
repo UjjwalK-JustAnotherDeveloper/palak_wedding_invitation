@@ -1,6 +1,6 @@
 /*
  * ╔══════════════════════════════════════════════════════════════╗
- * ║       Viktor & Paula Wedding — styles.css                    ║
+ * ║       Palak & Shubham Wedding — styles.css                   ║
  * ║  PART 1 · Fonts  (local: assets/fonts/)                     ║
  * ║  PART 2 · Tilda CDN Library CSS                             ║
  * ║  PART 3 · Per-Section Styles                                ║
@@ -309,7 +309,7 @@
 #rec2002506421 .t396__filter,
 #rec2002506421 .t396__carrier {
   height: 680px !important;
-  background: linear-gradient(180deg, #66021f 0%, #5a011b 55%, #4f0118 100%);
+  background: #66021f;
 }
 
 #rec2002506421 .t396__artboard {

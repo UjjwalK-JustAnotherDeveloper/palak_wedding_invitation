@@ -1,6 +1,6 @@
 /*
  * ╔══════════════════════════════════════════════════════════════╗
- * ║       Shubham & Palak Wedding — script.js                    ║
+ * ║       Palak & Shubham Wedding — script.js                    ║
  * ║  PART 1 · Tilda Library JS (all CDN files inlined)          ║
  * ║  PART 2 · Per-section block initialisers                    ║
  * ║  PART 3 · Custom — Music + RSVP (Google Sheets)            ║
@@ -449,6 +449,224 @@ function vpInitEventTimelineAnimation(timeline) {
   });
 }
 
+var VP_LOCATION_SECTION_CONTENT = {
+  en: {
+    eyebrow: 'Venue',
+    title: 'Where To Find Us',
+    hint: '\u2190 swipe to see all events \u2192',
+    note: 'All wedding festivities take place at Chateau de Paon.',
+    items: [
+      {
+        theme: 'sangeet',
+        tag: 'Sangeet & Cocktail',
+        date: 'Thursday \u00b7 19 Nov 2026 \u00b7 7:00 PM',
+        venue: 'Chateau de Paon',
+        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        cta: 'Get Directions'
+      },
+      {
+        theme: 'haldi',
+        tag: 'Haldi',
+        date: 'Friday \u00b7 20 Nov 2026 \u00b7 10:00 AM',
+        venue: 'Chateau de Paon',
+        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        cta: 'Get Directions'
+      },
+      {
+        theme: 'shadi',
+        tag: 'Shadi Night',
+        date: 'Friday \u00b7 20 Nov 2026 \u00b7 7:00 PM',
+        venue: 'Chateau de Paon',
+        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        cta: 'Get Directions'
+      }
+    ]
+  },
+  gu: {
+    eyebrow: 'સ્થળ',
+    title: 'અહીં મળીએ',
+    hint: '\u2190 બધા કાર્યક્રમો જોવા સ્વાઇપ કરો \u2192',
+    note: 'લગ્નના બધા કાર્યક્રમો Chateau de Paon ખાતે યોજાશે.',
+    items: [
+      {
+        theme: 'sangeet',
+        tag: 'સંગીત અને કોકટેલ',
+        date: 'ગુરુવાર \u00b7 19 નવેમ્બર 2026 \u00b7 સાંજ 7:00',
+        venue: 'Chateau de Paon',
+        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        cta: 'નકશો ખોલો'
+      },
+      {
+        theme: 'haldi',
+        tag: 'હળદી',
+        date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સવારે 10:00',
+        venue: 'Chateau de Paon',
+        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        cta: 'નકશો ખોલો'
+      },
+      {
+        theme: 'shadi',
+        tag: 'શાદી નાઇટ',
+        date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સાંજ 7:00',
+        venue: 'Chateau de Paon',
+        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        cta: 'નકશો ખોલો'
+      }
+    ]
+  }
+};
+
+var VP_LOCATION_IMAGE = 'assets/images/image-gen_1-Photoroo.webp';
+var VP_LOCATION_IMAGE_ALT = 'Chateau de Paon';
+var VP_LOCATION_MASK_IMAGE = 'assets/images/Mask_group_2_1_Trace.svg';
+var VP_LOCATION_MAP_URL = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('Petit Chemin de Saint-Gilles 13200 Arles, France');
+
+function vpEnsureLocationStyles() {
+  if (document.getElementById('vp-location-styles')) return;
+
+  var style = document.createElement('style');
+  style.id = 'vp-location-styles';
+  style.textContent = [
+    '.vp-location{position:relative; background:#fffaf8; padding:0 0 44px; overflow:hidden;}',
+    '.vp-location__mask{position:relative; z-index:1; display:flex; justify-content:center; width:100%; pointer-events:none;}',
+    '.vp-location__mask img{display:block; width:630px; max-width:none; height:auto;}',
+    '.vp-location__mask--top{margin-top:-76px;}',
+    '.vp-location__mask--bottom{margin-top:18px; transform:rotate(180deg);}',
+    '.vp-location__panel{position:relative; z-index:2; max-width:1040px; margin:0 auto; padding:22px 24px 0;}',
+    '.vp-location__eyebrow{margin:0 0 8px; text-align:center; font:600 11px/1.4 Arial, sans-serif; letter-spacing:0.18em; text-transform:uppercase; color:#9c7a5a;}',
+    '.vp-location__title{margin:0 0 34px; text-align:center; color:#3a3a3a; font-size:41px; line-height:1.55; font-weight:500; font-family:\"newtemplate\", Arial, sans-serif;}',
+    '.vp-location__cards{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:22px;}',
+    '.vp-location__card{background:#ffffff; border:1px solid rgba(216,184,163,0.52); border-radius:18px; overflow:hidden; box-shadow:0 18px 36px rgba(88,49,49,0.08); min-width:0;}',
+    '.vp-location__media{position:relative; aspect-ratio:4/3; overflow:hidden; background:#d2b2a2;}',
+    '.vp-location__media::after{content:\"\"; position:absolute; inset:0; background:linear-gradient(180deg, rgba(19,7,11,0.08), rgba(19,7,11,0.34));}',
+    '.vp-location__media img{width:100%; height:100%; object-fit:cover; display:block;}',
+    '.vp-location__card[data-theme=\"sangeet\"]{--vp-location-accent:#7a4766;}',
+    '.vp-location__card[data-theme=\"haldi\"]{--vp-location-accent:#b8892f;}',
+    '.vp-location__card[data-theme=\"shadi\"]{--vp-location-accent:#6a2b3f;}',
+    '.vp-location__body{padding:22px 22px 24px; display:flex; flex-direction:column; min-height:258px;}',
+    '.vp-location__tag{display:inline-flex; align-self:flex-start; margin-bottom:14px; padding:5px 13px; border-radius:999px; background:var(--vp-location-accent, #66021f); color:#fff; font:700 10px/1.2 Arial, sans-serif; letter-spacing:0.12em; text-transform:uppercase;}',
+    '.vp-location__date{margin:0 0 8px; color:#9c7a5a; font:400 11px/1.5 Arial, sans-serif; letter-spacing:0.06em; text-transform:uppercase;}',
+    '.vp-location__venue{margin:0 0 12px; color:#2b1610; font:400 29px/1.08 Georgia, \"Times New Roman\", serif; font-style:italic;}',
+    '.vp-location__divider{width:34px; height:1px; margin:0 0 12px; background:#e2d4c8;}',
+    '.vp-location__address{margin:0 0 20px; color:#7a6555; font:400 14px/1.7 Arial, sans-serif; flex:1;}',
+    '.vp-location__cta{display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:0 20px; border-radius:999px; border:1px solid #c8a090; background:transparent; color:#66021f; font:700 11px/1.2 Arial, sans-serif; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; transition:background-color .2s ease, color .2s ease, border-color .2s ease;}',
+    '.vp-location__cta:hover{background:#66021f; border-color:#66021f; color:#fffaf8;}',
+    '.vp-location__hint,.vp-location__note{font-family:Arial, sans-serif; text-align:center;}',
+    '.vp-location__hint{display:none; margin:10px 0 0; color:#9c7a5a; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;}',
+    '.vp-location__note{margin:26px auto 0; max-width:760px; color:#3a3a3a; font-size:13px; line-height:1.7;}',
+    '.vp-location--mobile .vp-location__panel{padding-left:24px; padding-right:24px;}',
+    '.vp-location--mobile .vp-location__title{font-size:34px; margin-bottom:28px;}',
+    '.vp-location--mobile .vp-location__cards{display:flex; gap:16px; overflow-x:auto; margin:0 -24px; padding:4px 24px 16px; scroll-snap-type:x mandatory; scrollbar-width:none;}',
+    '.vp-location--mobile .vp-location__cards::-webkit-scrollbar{display:none;}',
+    '.vp-location--mobile .vp-location__card{width:78vw; max-width:320px; flex:0 0 auto; scroll-snap-align:start;}',
+    '.vp-location--mobile .vp-location__body{min-height:236px;}',
+    '.vp-location--mobile .vp-location__hint{display:block;}',
+    '@media screen and (max-width:1199px){.vp-location__mask img{width:630px;}.vp-location__mask--top{margin-top:-76px;}}',
+    '@media screen and (max-width:959px){.vp-location__mask img{width:630px;}.vp-location__mask--top{margin-top:-74px;}}',
+    '@media screen and (max-width:639px){.vp-location__mask img{width:630px;}.vp-location__mask--top{margin-top:-74px;}}',
+    '@media screen and (max-width:479px){.vp-location__mask img{width:630px;}.vp-location__mask--top{margin-top:-77px;}}'
+  ].join('');
+  document.head.appendChild(style);
+}
+
+function vpCreateLocationSectionMarkup() {
+  return [
+    '<section id="vp-location-section" class="vp-location" aria-label="Venue information">',
+    '  <div class="vp-location__mask vp-location__mask--top" aria-hidden="true"><img src="' + VP_LOCATION_MASK_IMAGE + '" alt=""></div>',
+    '  <div class="vp-location__panel">',
+    '    <p class="vp-location__eyebrow" data-role="eyebrow"></p>',
+    '    <h2 class="vp-location__title" data-role="title"></h2>',
+    '    <div class="vp-location__cards" data-role="cards"></div>',
+    '    <p class="vp-location__hint" data-role="hint"></p>',
+    '    <p class="vp-location__note" data-role="note"></p>',
+    '  </div>',
+    '  <div class="vp-location__mask vp-location__mask--bottom" aria-hidden="true"><img src="' + VP_LOCATION_MASK_IMAGE + '" alt=""></div>',
+    '</section>'
+  ].join('');
+}
+
+function vpIsLocationMobileMode() {
+  if (window.isMobile) return true;
+  if (typeof window.innerWidth === 'number' && window.innerWidth < 768) return true;
+  if (window.screen && typeof window.screen.width === 'number' && window.screen.width < 768) return true;
+  return false;
+}
+
+function vpSyncLocationSectionMode(section) {
+  if (!section) return;
+  section.classList.toggle('vp-location--mobile', vpIsLocationMobileMode());
+}
+
+function vpEnsureLocationSection() {
+  var legacyRec = document.getElementById('rec2002802231');
+  if (!legacyRec) return null;
+
+  vpEnsureLocationStyles();
+
+  if (legacyRec.dataset.vpLocationHidden !== 'true') {
+    legacyRec.style.display = 'none';
+    legacyRec.setAttribute('aria-hidden', 'true');
+    legacyRec.dataset.vpLocationHidden = 'true';
+  }
+
+  var section = document.getElementById('vp-location-section');
+  if (!section) {
+    legacyRec.insertAdjacentHTML('afterend', vpCreateLocationSectionMarkup());
+    section = document.getElementById('vp-location-section');
+  }
+
+  if (section && section.dataset.locationReady !== 'true') {
+    section.dataset.locationReady = 'true';
+    var syncMode = function() {
+      vpSyncLocationSectionMode(section);
+    };
+    syncMode();
+    window.addEventListener('resize', syncMode);
+    window.addEventListener('orientationchange', syncMode);
+  }
+
+  return section;
+}
+
+function vpBuildLocationCards(items) {
+  return items.map(function(item) {
+    return [
+      '<article class="vp-location__card" data-theme="', item.theme, '">',
+      '  <div class="vp-location__media">',
+      '    <img src="', VP_LOCATION_IMAGE, '" alt="', VP_LOCATION_IMAGE_ALT, '" loading="lazy">',
+      '  </div>',
+      '  <div class="vp-location__body">',
+      '    <span class="vp-location__tag">', item.tag, '</span>',
+      '    <p class="vp-location__date">', item.date, '</p>',
+      '    <p class="vp-location__venue">', item.venue, '</p>',
+      '    <div class="vp-location__divider"></div>',
+      '    <p class="vp-location__address">', item.address, '</p>',
+      '    <a class="vp-location__cta" href="', VP_LOCATION_MAP_URL, '" target="_blank" rel="noreferrer noopener">', item.cta, '</a>',
+      '  </div>',
+      '</article>'
+    ].join('');
+  }).join('');
+}
+
+function vpRenderLocationSection(lang) {
+  var section = vpEnsureLocationSection();
+  if (!section) return;
+
+  var content = VP_LOCATION_SECTION_CONTENT[lang] || VP_LOCATION_SECTION_CONTENT.en;
+  var eyebrow = section.querySelector('[data-role="eyebrow"]');
+  var title = section.querySelector('[data-role="title"]');
+  var cards = section.querySelector('[data-role="cards"]');
+  var hint = section.querySelector('[data-role="hint"]');
+  var note = section.querySelector('[data-role="note"]');
+
+  if (eyebrow) eyebrow.textContent = content.eyebrow;
+  if (title) title.textContent = content.title;
+  if (cards) cards.innerHTML = vpBuildLocationCards(content.items);
+  if (hint) hint.textContent = content.hint;
+  if (note) note.textContent = content.note;
+  vpSyncLocationSectionMode(section);
+}
+
 // Prevent multiple clicks on envelope
 document.addEventListener('DOMContentLoaded', function() {
   const envelope = document.querySelector('[data-elem-id="1773847037346"]');
@@ -588,14 +806,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function setEnglish() {
-    setHtml('[field="tn_text_1763402147625"]', 'Shubham<br /><br />Palak');
+    setHtml('[field="tn_text_1763402147625"]', 'Palak<br /><br />Shubham');
     setHtml('[field="tn_text_176340398328864790"]', 'Wedding Day');
     setHtml('[field="tn_text_176340401720454780"]', '20.11.26');
     setHtml('[field="tn_text_176340390975774690"]', '&');
     setHtml('[field="tn_text_1773926384566"]', 'Click to open');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'Dear Friends and Family,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'As we get ready to say "I do," we feel grateful for the wonderful people in our lives. <br /><br />Your support means the world to us, and we would be honored to have you with us as we begin our life together.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With the blessings of the Katira and Shrivastava families,<br /><br />Palak Katira &amp; Shubham Shrivastava<br />invite you to grace their wedding and bless their journey of forever.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'The Celebration Begins In');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'Days');
@@ -603,9 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setText('#countdownContainer .time-block:nth-child(5) .label', 'Minutes');
     setText('#countdownContainer .time-block:nth-child(7) .label', 'Seconds');
 
-    setHtml('#rec2002802231 [field="tn_text_1771277026942000001"]', 'Location');
-    setHtml('#rec2002802231 [field="tn_text_1772804808869"]', 'Chateau de Paon');
-    setHtml('#rec2002802231 [field="tn_text_1772813480591000001"]', 'Address: Petit Chemin de Saint-Gilles13200 Arles, France');
+    vpRenderLocationSection('en');
     vpRenderEventTimeline('en');
 
     setHtml('#rec2003451831 [field="tn_text_1763405219328"]', 'Dress Code');
@@ -636,18 +852,18 @@ document.addEventListener('DOMContentLoaded', function() {
     setText('#rec2052858183 .t-btnflex__text', 'Submit');
 
     setHtml('#rec2003869491 [field="tn_text_1763405219328"]', 'Hope to see you there!');
-    setHtml('#rec2003869491 [field="tn_text_1772813849329000001"]', 'Shubham and Palak');
+    setHtml('#rec2003869491 [field="tn_text_1772813849329000001"]', 'Palak and Shubham');
   }
 
   function setGujarati() {
-    setHtml('[field="tn_text_1763402147625"]', 'શુભમ<br /><br />પલક');
+    setHtml('[field="tn_text_1763402147625"]', 'પલક<br /><br />શુભમ');
     setHtml('[field="tn_text_176340398328864790"]', 'લગ્ન દિવસ');
     setHtml('[field="tn_text_176340401720454780"]', '20.11.26');
     setHtml('[field="tn_text_176340390975774690"]', '&');
     setHtml('[field="tn_text_1773926384566"]', 'ખોલવા માટે ક્લિક કરો');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'પ્રિય મિત્રો અને પરિવાર,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'જેમ જેમ અમે "હું કરું છું" કહેવા માટે તૈયાર થઈએ છીએ, તેમ અમારા જીવનમાં અમારી પાસે રહેલા અદ્ભુત લોકો માટે અમે આભારી છીએ. <br /><br />તમારો સમર્થન અમને માટે દુનિયા મતલબ છે, અને અમારી સાથે અમારા જીવનની શરૂઆત કરવા માટે તમને અમારી સાથે રાખવું અમને માનની બાબત હશે.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'કટીરા અને શ્રીવાસ્તવ પરિવારોના આશીર્વાદ સાથે,<br /><br />પલક કટીરા અને શુભમ શ્રીવાસ્તવ<br />તેમના લગ્ન પ્રસંગે આપની ઉપસ્થિતિથી તેમની સદા માટેની સફરને આશીર્વાદ આપવા હાર્દિક આમંત્રણ આપે છે.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'ઉજવણી શરૂ થવામાં બાકી છે');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'દિવસ');
@@ -655,9 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setText('#countdownContainer .time-block:nth-child(5) .label', 'મિનિટ');
     setText('#countdownContainer .time-block:nth-child(7) .label', 'સેકંડ');
 
-    setHtml('#rec2002802231 [field="tn_text_1771277026942000001"]', 'સ્થળ');
-    setHtml('#rec2002802231 [field="tn_text_1772804808869"]', 'શાતો દ પાઓં');
-    setHtml('#rec2002802231 [field="tn_text_1772813480591000001"]', 'સરનામું: Petit Chemin de Saint-Gilles13200 Arles, France');
+    vpRenderLocationSection('gu');
     vpRenderEventTimeline('gu');
 
     setHtml('#rec2003451831 [field="tn_text_1763405219328"]', 'ડ્રેસ કોડ');
@@ -687,7 +901,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setText('#rec2052858183 .t-btnflex__text', 'મોકલો');
 
     setHtml('#rec2003869491 [field="tn_text_1763405219328"]', 'ત્યાં તમને જોવાની આશા છે!');
-    setHtml('#rec2003869491 [field="tn_text_1772813849329000001"]', 'શુભમ અને પલક');
+    setHtml('#rec2003869491 [field="tn_text_1772813849329000001"]', 'પલક અને શુભમ');
   }
 
   langSwitch.addEventListener('change', function() {
