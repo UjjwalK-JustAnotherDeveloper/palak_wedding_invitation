@@ -228,7 +228,7 @@ var VP_EVENT_TIMELINE_CONTENT = {
   en: {
     title: 'Event Timeline',
     items: [
-      { text: '19Nov 7pm - Sangeet and Cocktail Night', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { text: '19Nov 8pm - Sangeet and Cocktail Night', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
       { text: '20Nov 10am - Haldi', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
       { text: '20Nov 7pm - Shadi Night', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
     ]
@@ -236,7 +236,7 @@ var VP_EVENT_TIMELINE_CONTENT = {
   gu: {
     title: 'ઇવેન્ટ ટાઇમલાઇન',
     items: [
-      { text: '19Nov 7pm - સંગીત અને કોકટેલ નાઇટ', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { text: '19Nov 8pm - સંગીત અને કોકટેલ નાઇટ', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
       { text: '20Nov 10am - હળદી', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
       { text: '20Nov 7pm - શાદી નાઇટ', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
     ]
@@ -454,30 +454,36 @@ var VP_LOCATION_SECTION_CONTENT = {
     eyebrow: 'Venue',
     title: 'Where To Find Us',
     hint: '\u2190 swipe to see all events \u2192',
-    note: 'All wedding festivities take place at Chateau de Paon.',
+    note: 'Each celebration has its own venue. Please check the details on each card before traveling.',
     items: [
       {
         theme: 'sangeet',
         tag: 'Sangeet & Cocktail',
-        date: 'Thursday \u00b7 19 Nov 2026 \u00b7 7:00 PM',
-        venue: 'Chateau de Paon',
-        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        date: 'Thursday \u00b7 19 Nov 2026 \u00b7 8:00 PM',
+        venue: 'The Palms Town & Country Club',
+        address: 'B Block, Sushant Lok, Phase I, Gurgaon - 122001, India',
+        mapUrl: 'https://www.google.com/maps/search/?api=1&query=The%20Palms%20Town%20%26%20Country%20Club%2C%20B%20Block%2C%20Sushant%20Lok%2C%20Phase%20I%2C%20Gurgaon%20-%20122001%2C%20India',
         cta: 'Get Directions'
       },
       {
         theme: 'haldi',
-        tag: 'Haldi',
+        tags: ['Haldi', 'Stay'],
         date: 'Friday \u00b7 20 Nov 2026 \u00b7 10:00 AM',
+        details: [
+          { label: 'Check-in', value: 'Thursday \u00b7 19 Nov 2026 \u00b7 12:00 PM' },
+          { label: 'Check-out', value: 'Saturday \u00b7 21 Nov 2026 \u00b7 11:00 AM' }
+        ],
         venue: 'Chateau de Paon',
-        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        address: 'Petit Chemin de Saint-Gilles, 13200 Arles, France',
         cta: 'Get Directions'
       },
       {
         theme: 'shadi',
         tag: 'Shadi Night',
         date: 'Friday \u00b7 20 Nov 2026 \u00b7 7:00 PM',
-        venue: 'Chateau de Paon',
-        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        venue: 'The Bristol Hotel, Gurgaon',
+        address: 'DLF Phase-I, Gurgaon-122002, Haryana, India',
+        mapUrl: 'https://www.google.com/maps/search/?api=1&query=The%20Bristol%20Hotel%2C%20DLF%20Phase-I%2C%20Gurgaon-122002%2C%20Haryana%2C%20India',
         cta: 'Get Directions'
       }
     ]
@@ -486,30 +492,36 @@ var VP_LOCATION_SECTION_CONTENT = {
     eyebrow: 'સ્થળ',
     title: 'અહીં મળીએ',
     hint: '\u2190 બધા કાર્યક્રમો જોવા સ્વાઇપ કરો \u2192',
-    note: 'લગ્નના બધા કાર્યક્રમો Chateau de Paon ખાતે યોજાશે.',
+    note: 'દરેક કાર્યક્રમનું સ્થળ અલગ છે. નીકળતા પહેલાં દરેક કાર્ડ તપાસો.',
     items: [
       {
         theme: 'sangeet',
         tag: 'સંગીત અને કોકટેલ',
-        date: 'ગુરુવાર \u00b7 19 નવેમ્બર 2026 \u00b7 સાંજ 7:00',
-        venue: 'Chateau de Paon',
-        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        date: 'ગુરુવાર \u00b7 19 નવેમ્બર 2026 \u00b7 સાંજ 8:00',
+        venue: 'The Palms Town & Country Club',
+        address: 'B Block, Sushant Lok, Phase I, Gurgaon - 122001, India',
+        mapUrl: 'https://www.google.com/maps/search/?api=1&query=The%20Palms%20Town%20%26%20Country%20Club%2C%20B%20Block%2C%20Sushant%20Lok%2C%20Phase%20I%2C%20Gurgaon%20-%20122001%2C%20India',
         cta: 'નકશો ખોલો'
       },
       {
         theme: 'haldi',
-        tag: 'હળદી',
+        tags: ['હળદી', 'Stay'],
         date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સવારે 10:00',
+        details: [
+          { label: 'ચેક-ઇન', value: 'ગુરુવાર \u00b7 19 નવેમ્બર 2026 \u00b7 બપોરે 12:00' },
+          { label: 'ચેક-આઉટ', value: 'શનિવાર \u00b7 21 નવેમ્બર 2026 \u00b7 સવારે 11:00' }
+        ],
         venue: 'Chateau de Paon',
-        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        address: 'Petit Chemin de Saint-Gilles, 13200 Arles, France',
         cta: 'નકશો ખોલો'
       },
       {
         theme: 'shadi',
         tag: 'શાદી નાઇટ',
         date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સાંજ 7:00',
-        venue: 'Chateau de Paon',
-        address: 'Petit Chemin de Saint-Gilles<br>13200 Arles, France',
+        venue: 'The Bristol Hotel, Gurgaon',
+        address: 'DLF Phase-I, Gurgaon-122002, Haryana, India',
+        mapUrl: 'https://www.google.com/maps/search/?api=1&query=The%20Bristol%20Hotel%2C%20DLF%20Phase-I%2C%20Gurgaon-122002%2C%20Haryana%2C%20India',
         cta: 'નકશો ખોલો'
       }
     ]
@@ -517,6 +529,10 @@ var VP_LOCATION_SECTION_CONTENT = {
 };
 
 var VP_LOCATION_IMAGE = 'assets/images/image-gen_1-Photoroo.webp';
+var VP_LOCATION_THEME_IMAGES = {
+  sangeet: 'assets/images/sangeet_location_image.webp',
+  shadi: 'assets/images/wedding_location_image.webp'
+};
 var VP_LOCATION_IMAGE_ALT = 'Chateau de Paon';
 var VP_LOCATION_MASK_IMAGE = 'assets/images/Mask_group_2_1_Trace.svg';
 var VP_LOCATION_MAP_URL = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('Petit Chemin de Saint-Gilles 13200 Arles, France');
@@ -527,40 +543,58 @@ function vpEnsureLocationStyles() {
   var style = document.createElement('style');
   style.id = 'vp-location-styles';
   style.textContent = [
-    '.vp-location{position:relative; background:#fffaf8; padding:0 0 44px; overflow:hidden;}',
+    '.vp-location{position:relative; background:#fffaf8; padding:0 0 96px; overflow:hidden;}',
     '.vp-location__mask{position:relative; z-index:1; display:flex; justify-content:center; width:100%; pointer-events:none;}',
     '.vp-location__mask img{display:block; width:630px; max-width:none; height:auto;}',
     '.vp-location__mask--top{margin-top:-76px;}',
-    '.vp-location__mask--bottom{margin-top:18px; transform:rotate(180deg);}',
+    '.vp-location__mask--bottom{display:none;}',
     '.vp-location__panel{position:relative; z-index:2; max-width:1040px; margin:0 auto; padding:22px 24px 0;}',
     '.vp-location__eyebrow{margin:0 0 8px; text-align:center; font:600 11px/1.4 Arial, sans-serif; letter-spacing:0.18em; text-transform:uppercase; color:#9c7a5a;}',
     '.vp-location__title{margin:0 0 34px; text-align:center; color:#3a3a3a; font-size:41px; line-height:1.55; font-weight:500; font-family:\"newtemplate\", Arial, sans-serif;}',
+    '.vp-location__callout{display:flex; align-items:flex-start; gap:16px; max-width:760px; margin:0 auto 26px; padding:16px 20px; border:1px solid rgba(216,183,154,0.8); border-radius:18px; background:linear-gradient(135deg, #f6ede5 0%, #fff7f0 100%); box-shadow:0 10px 24px rgba(105,56,31,0.06);}',
+    '.vp-location__callout-icon{display:inline-flex; width:30px; height:30px; align-items:center; justify-content:center; border-radius:999px; background:#b8892f; color:#fffaf8; font:700 14px/1 Arial, sans-serif; box-shadow:0 8px 18px rgba(184,137,47,0.22);}',
+    '.vp-location__callout-copy{flex:1; min-width:0; padding-top:2px;}',
+    '.vp-location__note{width:100%; margin:0; color:#5a2e24; font:400 14px/1.65 Arial, sans-serif; text-align:left;}',
+    '.vp-location__note-text{display:block;}',
     '.vp-location__cards{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:22px;}',
-    '.vp-location__card{background:#ffffff; border:1px solid rgba(216,184,163,0.52); border-radius:18px; overflow:hidden; box-shadow:0 18px 36px rgba(88,49,49,0.08); min-width:0;}',
-    '.vp-location__media{position:relative; aspect-ratio:4/3; overflow:hidden; background:#d2b2a2;}',
+    '.vp-location__card{display:flex; flex-direction:column; background:#fff8f2; border:1px solid rgba(216,184,163,0.52); border-radius:18px; overflow:hidden; box-shadow:0 18px 36px rgba(88,49,49,0.08); min-width:0;}',
+    '.vp-location__media{position:relative; aspect-ratio:4/3; overflow:hidden; background:#fff8f2; isolation:isolate; flex-shrink:0;}',
     '.vp-location__media::after{content:\"\"; position:absolute; inset:0; background:linear-gradient(180deg, rgba(19,7,11,0.08), rgba(19,7,11,0.34));}',
-    '.vp-location__media img{width:100%; height:100%; object-fit:cover; display:block;}',
+    '.vp-location__media img{width:100%; height:100%; object-fit:cover; display:block; filter:sepia(30%) saturate(85%) brightness(95%);}',
     '.vp-location__card[data-theme=\"sangeet\"]{--vp-location-accent:#7a4766;}',
     '.vp-location__card[data-theme=\"haldi\"]{--vp-location-accent:#b8892f;}',
     '.vp-location__card[data-theme=\"shadi\"]{--vp-location-accent:#6a2b3f;}',
-    '.vp-location__body{padding:22px 22px 24px; display:flex; flex-direction:column; min-height:258px;}',
-    '.vp-location__tag{display:inline-flex; align-self:flex-start; margin-bottom:14px; padding:5px 13px; border-radius:999px; background:var(--vp-location-accent, #66021f); color:#fff; font:700 10px/1.2 Arial, sans-serif; letter-spacing:0.12em; text-transform:uppercase;}',
+    '.vp-location__card[data-theme=\"sangeet\"] .vp-location__media img, .vp-location__card[data-theme=\"shadi\"] .vp-location__media img{object-fit:contain; padding:16px; box-sizing:border-box; mix-blend-mode:screen; filter:sepia(30%) saturate(85%) brightness(95%) drop-shadow(0 16px 24px rgba(70,37,37,0.12));}',
+    '.vp-location__body{padding:22px 22px 24px; display:flex; flex-direction:column; flex:1; min-height:258px;}',
+    '.vp-location__tags{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}',
+    '.vp-location__tag{display:inline-flex; align-self:flex-start; padding:5px 13px; border-radius:999px; background:var(--vp-location-accent, #66021f); color:#fff; font:700 10px/1.2 Arial, sans-serif; letter-spacing:0.12em; text-transform:uppercase;}',
+    '.vp-location__tag--stay{background:#617a58; color:#fffaf8;}',
     '.vp-location__date{margin:0 0 8px; color:#9c7a5a; font:400 11px/1.5 Arial, sans-serif; letter-spacing:0.06em; text-transform:uppercase;}',
+    '.vp-location__info{display:flex; flex:1; flex-direction:column;}',
+    '.vp-location__details{display:grid; gap:8px; margin:0 0 14px;}',
+    '.vp-location__detail{padding:9px 11px; border-radius:12px; background:#f6efe7; border:1px solid rgba(200,160,144,0.35);}',
+    '.vp-location__detail-label{display:block; margin:0 0 3px; color:#8a6d5f; font:700 10px/1.2 Arial, sans-serif; letter-spacing:0.08em; text-transform:uppercase;}',
+    '.vp-location__detail-value{display:block; color:#4b3c35; font:400 12px/1.45 Arial, sans-serif;}',
     '.vp-location__venue{margin:0 0 12px; color:#2b1610; font:400 29px/1.08 Georgia, \"Times New Roman\", serif; font-style:italic;}',
     '.vp-location__divider{width:34px; height:1px; margin:0 0 12px; background:#e2d4c8;}',
-    '.vp-location__address{margin:0 0 20px; color:#7a6555; font:400 14px/1.7 Arial, sans-serif; flex:1;}',
-    '.vp-location__cta{display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:0 20px; border-radius:999px; border:1px solid #c8a090; background:transparent; color:#66021f; font:700 11px/1.2 Arial, sans-serif; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; transition:background-color .2s ease, color .2s ease, border-color .2s ease;}',
+    '.vp-location__address{max-width:29ch; margin:0 0 12px; color:#7a6555; font:400 14px/1.7 Arial, sans-serif; text-wrap:pretty;}',
+    '.vp-location__cta{display:inline-flex; align-items:center; align-self:center; justify-content:center; min-height:42px; margin-top:auto; padding:0 20px; border-radius:999px; border:1px solid #c8a090; background:transparent; color:#66021f; font:700 11px/1.2 Arial, sans-serif; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; text-align:center; white-space:nowrap; transition:background-color .2s ease, color .2s ease, border-color .2s ease;}',
     '.vp-location__cta:hover{background:#66021f; border-color:#66021f; color:#fffaf8;}',
-    '.vp-location__hint,.vp-location__note{font-family:Arial, sans-serif; text-align:center;}',
+    '.vp-location__hint{font-family:Arial, sans-serif; text-align:center;}',
     '.vp-location__hint{display:none; margin:10px 0 0; color:#9c7a5a; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;}',
-    '.vp-location__note{margin:26px auto 0; max-width:760px; color:#3a3a3a; font-size:13px; line-height:1.7;}',
+    '.vp-location--mobile{padding-bottom:84px;}',
     '.vp-location--mobile .vp-location__panel{padding-left:24px; padding-right:24px;}',
     '.vp-location--mobile .vp-location__title{font-size:34px; margin-bottom:28px;}',
+    '.vp-location--mobile .vp-location__callout{margin-bottom:22px; padding:13px 16px; gap:10px;}',
+    '.vp-location--mobile .vp-location__callout-icon{width:28px; height:28px; font-size:13px;}',
+    '.vp-location--mobile .vp-location__note{font-size:13px;}',
     '.vp-location--mobile .vp-location__cards{display:flex; gap:16px; overflow-x:auto; margin:0 -24px; padding:4px 24px 16px; scroll-snap-type:x mandatory; scrollbar-width:none;}',
     '.vp-location--mobile .vp-location__cards::-webkit-scrollbar{display:none;}',
     '.vp-location--mobile .vp-location__card{width:78vw; max-width:320px; flex:0 0 auto; scroll-snap-align:start;}',
     '.vp-location--mobile .vp-location__body{min-height:236px;}',
     '.vp-location--mobile .vp-location__hint{display:block;}',
+    '#rec2003451831{position:relative; overflow:visible !important;}',
+    '#rec2003451831::before{content:\"\"; position:absolute; left:50%; top:-62px; z-index:5; width:630px; height:121px; transform:translateX(-50%) rotate(180deg); background:url(\"assets/images/Mask_group_2_1_Trace.svg\") center center / contain no-repeat; pointer-events:none;}',
     '@media screen and (max-width:1199px){.vp-location__mask img{width:630px;}.vp-location__mask--top{margin-top:-76px;}}',
     '@media screen and (max-width:959px){.vp-location__mask img{width:630px;}.vp-location__mask--top{margin-top:-74px;}}',
     '@media screen and (max-width:639px){.vp-location__mask img{width:630px;}.vp-location__mask--top{margin-top:-74px;}}',
@@ -576,9 +610,14 @@ function vpCreateLocationSectionMarkup() {
     '  <div class="vp-location__panel">',
     '    <p class="vp-location__eyebrow" data-role="eyebrow"></p>',
     '    <h2 class="vp-location__title" data-role="title"></h2>',
+    '    <div class="vp-location__callout" data-role="note-callout">',
+    '      <span class="vp-location__callout-icon" aria-hidden="true">i</span>',
+    '      <div class="vp-location__callout-copy">',
+    '        <p class="vp-location__note"><span class="vp-location__note-text" data-role="note"></span></p>',
+    '      </div>',
+    '    </div>',
     '    <div class="vp-location__cards" data-role="cards"></div>',
     '    <p class="vp-location__hint" data-role="hint"></p>',
-    '    <p class="vp-location__note" data-role="note"></p>',
     '  </div>',
     '  <div class="vp-location__mask vp-location__mask--bottom" aria-hidden="true"><img src="' + VP_LOCATION_MASK_IMAGE + '" alt=""></div>',
     '</section>'
@@ -630,18 +669,44 @@ function vpEnsureLocationSection() {
 
 function vpBuildLocationCards(items) {
   return items.map(function(item) {
+    var image = VP_LOCATION_THEME_IMAGES[item.theme] || VP_LOCATION_IMAGE;
+    var mapUrl = item.mapUrl || VP_LOCATION_MAP_URL;
+    var tags = Array.isArray(item.tags) && item.tags.length ? item.tags : [item.tag];
+    var tagsMarkup = tags.map(function(tag) {
+      var tagClass = 'vp-location__tag';
+      if (typeof tag === 'string' && tag.trim().toLowerCase() === 'stay') {
+        tagClass += ' vp-location__tag--stay';
+      }
+      return '<span class="' + tagClass + '">' + tag + '</span>';
+    }).join('');
+    var detailsMarkup = Array.isArray(item.details) && item.details.length ? [
+      '<div class="vp-location__details">',
+      item.details.map(function(detail) {
+        return [
+          '<div class="vp-location__detail">',
+          '  <span class="vp-location__detail-label">', detail.label, '</span>',
+          '  <span class="vp-location__detail-value">', detail.value, '</span>',
+          '</div>'
+        ].join('');
+      }).join(''),
+      '</div>'
+    ].join('') : '';
+
     return [
       '<article class="vp-location__card" data-theme="', item.theme, '">',
       '  <div class="vp-location__media">',
-      '    <img src="', VP_LOCATION_IMAGE, '" alt="', VP_LOCATION_IMAGE_ALT, '" loading="lazy">',
+      '    <img src="', image, '" alt="', item.venue || VP_LOCATION_IMAGE_ALT, '" loading="lazy">',
       '  </div>',
       '  <div class="vp-location__body">',
-      '    <span class="vp-location__tag">', item.tag, '</span>',
+      '    <div class="vp-location__tags">', tagsMarkup, '</div>',
       '    <p class="vp-location__date">', item.date, '</p>',
-      '    <p class="vp-location__venue">', item.venue, '</p>',
-      '    <div class="vp-location__divider"></div>',
-      '    <p class="vp-location__address">', item.address, '</p>',
-      '    <a class="vp-location__cta" href="', VP_LOCATION_MAP_URL, '" target="_blank" rel="noreferrer noopener">', item.cta, '</a>',
+      '    <div class="vp-location__info">',
+      '      <p class="vp-location__venue">', item.venue, '</p>',
+      '      <div class="vp-location__divider"></div>',
+      '      <p class="vp-location__address">', item.address, '</p>',
+      detailsMarkup,
+      '    </div>',
+      '    <a class="vp-location__cta" href="', mapUrl, '" target="_blank" rel="noreferrer noopener">', item.cta, '</a>',
       '  </div>',
       '</article>'
     ].join('');
@@ -823,6 +888,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     vpRenderLocationSection('en');
     vpRenderEventTimeline('en');
+    setHtml('#rec2002506421 [field="tn_text_1772803062504"]', '19Nov 8pm');
 
     setHtml('#rec2003451831 [field="tn_text_1763405219328"]', 'Dress Code');
     setHtml('#rec2003451831 [field="tn_text_1772813849329000001"]', 'We kindly invite you to dress in elegant attire that reflects the style and spirit of our special day.');
@@ -873,6 +939,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     vpRenderLocationSection('gu');
     vpRenderEventTimeline('gu');
+    setHtml('#rec2002506421 [field="tn_text_1772803062504"]', '19Nov 8pm');
 
     setHtml('#rec2003451831 [field="tn_text_1763405219328"]', 'ડ્રેસ કોડ');
     setHtml('#rec2003451831 [field="tn_text_1772813849329000001"]', 'અમે નમ્ર વિનંતી કરીએ છીએ કે તમે અમારા વિશેષ દિવસની શૈલી અને ભાવનાને અનુરૂપ સજ્જન અને ભવ્ય વસ્ત્રોમાં પધારો.');
