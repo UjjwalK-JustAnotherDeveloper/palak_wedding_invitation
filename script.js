@@ -178,47 +178,101 @@ vpBackgroundAudio.preload = 'auto';
 /* ════════════════════════════════════════════════════════════════
    CUSTOM — RSVP → Google Sheets
    ─────────────────────────────────────────────────────────────
-   1. sheets.google.com → New sheet → headers: Timestamp|Name|Attendance|Dietary
-   2. Extensions → Apps Script → paste:
-        function doPost(e){
-          var s=SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-          var d=JSON.parse(e.postData.contents);
-          s.appendRow([d.timestamp,d.name,d.attendance,d.dietary]);
-          return ContentService.createTextOutput("OK");
-        }
-      Deploy → New Deployment → Web App → Anyone → Copy URL
-   3. Paste URL below
+   Standalone mode: this bypasses Tilda's built-in form receiver,
+   so RSVP can be submitted from localhost and any deployed domain.
+   1. Open google-apps-script.gs in this project
+   2. Create an Apps Script project connected to your Google account
+   3. Paste that file there and deploy as Web App with access set to Anyone
+   4. Paste the Web App URL below
+   Note: your Google Sheet sharing link is not a writable API endpoint
    ════════════════════════════════════════════════════════════════ */
-var VP_SHEET_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+var VP_SHEET_URL = "https://script.google.com/macros/s/AKfycbx6ADP68xhzYbTQ0YcdEXrozPrkZ7Yoj6nsmdUVbuHqNmhmjmYBkS7LeyAYjEZsnZNE/exec";
 
 document.addEventListener('DOMContentLoaded', function() {
   var form = document.getElementById('form2052858183');
   if (!form) return;
+  form.setAttribute('novalidate', 'novalidate');
+  var foodGroup = form.querySelector('[data-input-lid="5828866651122"]');
+  if (foodGroup) foodGroup.remove();
+
+  var submitBtn = form.querySelector('[type="submit"]');
+  var submitLabel = submitBtn ? submitBtn.querySelector('.t-btnflex__text') : null;
+  var popupDescription = document.querySelector('#rec2052858183 .t702__descr');
+  var availabilityInputs = Array.prototype.slice.call(form.querySelectorAll('input.t-checkbox'));
+
+  availabilityInputs.forEach(function(input) {
+    input.addEventListener('change', function() {
+      if (!input.checked) return;
+      availabilityInputs.forEach(function(other) {
+        if (other !== input) other.checked = false;
+      });
+    });
+  });
+
+  function setSubmitText(text) {
+    if (submitLabel) {
+      submitLabel.textContent = text;
+    } else if (submitBtn) {
+      submitBtn.textContent = text;
+    }
+  }
+
+  function setDeadlineMessageVisible(isVisible) {
+    if (!popupDescription) return;
+    popupDescription.style.display = isVisible ? '' : 'none';
+  }
+
+  setDeadlineMessageVisible(true);
+
   form.addEventListener('submit', function(e) {
-    e.preventDefault(); e.stopPropagation();
-    var name      = (form.querySelector('input[name="Your name"]') || {}).value || '';
-    var dietary   = (form.querySelector('textarea') || {}).value || '';
-    var checked   = form.querySelectorAll('input.t-checkbox:checked');
-    var attendance = [];
-    checked.forEach(function(c){ attendance.push(c.value); });
-    if (!name || !attendance.length) { alert('Please enter your name and attendance.'); return; }
+    e.preventDefault();
+    e.stopPropagation();
+
+    var name = ((form.querySelector('input[name="Your name"]') || {}).value || '').trim();
+    var selectedAvailability = form.querySelector('input.t-checkbox:checked');
+    var availability = selectedAvailability ? selectedAvailability.value : '';
     var successBox = form.querySelector('.js-successbox');
-    var inputsBox  = form.querySelector('.t-form__inputsbox');
-    var submitBtn  = form.querySelector('[type="submit"]');
-    if (VP_SHEET_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-      if (successBox){ successBox.style.display='block'; successBox.innerHTML='<p>✓ Thank you! (Connect Google Sheets — see script.js)</p>'; }
-      if (inputsBox) inputsBox.style.display='none';
+    var inputsBox = form.querySelector('.t-form__inputsbox');
+
+    if (!name || !availability) {
+      alert('Please enter your name and availability.');
       return;
     }
-    if (submitBtn) { submitBtn.disabled=true; submitBtn.textContent='Sending…'; }
+
+    if (VP_SHEET_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
+      if (successBox) {
+        successBox.style.display = 'block';
+        successBox.innerHTML = '<p>Please connect the Google Apps Script Web App URL in script.js before using RSVP.</p>';
+      }
+      return;
+    }
+
+    if (successBox) successBox.style.display = 'none';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      setSubmitText('Sending...');
+    }
+
     fetch(VP_SHEET_URL, {
-      method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ timestamp:new Date().toLocaleString(), name:name, attendance:attendance.join(', '), dietary:dietary||'None' })
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        name: name,
+        availability: availability
+      })
     }).then(function(){
-      if (successBox){ successBox.style.display='block'; successBox.innerHTML='<p>✓ Thank you! We look forward to celebrating with you!</p>'; }
-      if (inputsBox) inputsBox.style.display='none';
+      if (successBox) {
+        successBox.style.display = 'block';
+        successBox.innerHTML = '<p>Thank you! We look forward to celebrating with you!</p>';
+      }
+      setDeadlineMessageVisible(false);
+      if (inputsBox) inputsBox.style.display = 'none';
     }).catch(function(){
-      if (submitBtn){ submitBtn.disabled=false; submitBtn.textContent='Submit'; }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        setSubmitText('Submit');
+      }
       alert('Something went wrong. Please try again.');
     });
   });
@@ -1049,6 +1103,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function setLanguage(lang) {
     localStorage.setItem('language', lang);
+    document.documentElement.setAttribute('lang', lang === 'gu' ? 'gu' : 'en');
+    document.body.setAttribute('data-language', lang);
     const toggle = document.getElementById('language-toggle');
     if (lang === 'en') {
       langSwitch.checked = false;
@@ -1073,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_1773926384566"]', 'Click to open');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'Dear Friends and Family,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With the blessings of the Katira and Shrivastava families,<br /><br />Palak Katira &amp; Shubham Shrivastava<br />invite you to grace their wedding and bless their journey of forever.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With love in their hearts and blessings from God,<br />the Katira and Srivastava families warmly invite you<br />to celebrate the wedding of their children,<br />Palak and Shubham,<br />and witness the start of their lifelong journey together.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'The Celebration Begins In');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'Days');
@@ -1087,19 +1143,19 @@ document.addEventListener('DOMContentLoaded', function() {
     vpRenderDressCodeSection('en');
 
     setHtml('#rec2003555721 [field="tn_text_1771277026942000001"]', 'Details');
-    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'For additional information or questions, please contact the wedding organizers.');
-    setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'Your presence is the greatest gift to us. However, if you wish to honor us with a present, a contribution toward our future would be sincerely appreciated.');
-    setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'Ameila');
+    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'For additional information or questions, please contact the bride\'s father, Manish Katira.');
+    setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'Your gracious presence and blessings will make the day even more memorable.');
+    setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'Manish Katira');
+    setHtml('#rec2003555721 [field="tn_text_1772822026012000002"]', '7028028194');
 
     setHtml('#rec2003860951 [field="tn_text_1763405219328"]', 'Confirm Your Attendance');
     setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'To help us prepare for a joyful celebration, kindly confirm your attendance.');
-    setText('#rec2003860951 .tn-atom__button-text', 'RSVP');
+    setText('#rec2003860951 .tn-atom__button-text', 'Confirm Attendance');
 
     setText('#popuptitle_2052858183', 'Confirm Your Attendance');
     setText('#rec2052858183 .t702__descr', 'Please RSVP before March 20');
     setText('#field-title_5828866651120', 'Your name');
     setText('#field-title_5828866651121', 'Will you come?');
-    setText('#field-title_5828866651122', 'Do have have any food intolerances?');
     setTextAll('#rec2052858183 .t-checkboxes__item span', '');
     setText('#rec2052858183 .t-checkboxes__item:nth-child(1) span', 'Yes, I will');
     setText('#rec2052858183 .t-checkboxes__item:nth-child(2) span', 'Unfortunately, I cant :(');
@@ -1120,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_1773926384566"]', 'ખોલવા માટે ક્લિક કરો');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'પ્રિય મિત્રો અને પરિવાર,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'કટીરા અને શ્રીવાસ્તવ પરિવારોના આશીર્વાદ સાથે,<br /><br />પલક કટીરા અને શુભમ શ્રીવાસ્તવ<br />તેમના લગ્ન પ્રસંગે આપની ઉપસ્થિતિથી તેમની સદા માટેની સફરને આશીર્વાદ આપવા હાર્દિક આમંત્રણ આપે છે.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'હૃદયમાં પ્રેમ અને ભગવાનના આશીર્વાદ સાથે,<br />કટીરા અને શ્રીવાસ્તવ પરિવારો આપને<br />તેમના સંતાનો પલક અને શુભમના લગ્નોત્સવમાં<br />હાર્દિક આમંત્રણ આપે છે,<br />અને તેમની જીવનભરની સાથેની સફરની<br />શરૂઆતના સાક્ષી બનવા આમંત્રિત કરે છે.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'ઉજવણી શરૂ થવામાં બાકી છે');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'દિવસ');
@@ -1134,19 +1190,19 @@ document.addEventListener('DOMContentLoaded', function() {
     vpRenderDressCodeSection('gu');
 
     setHtml('#rec2003555721 [field="tn_text_1771277026942000001"]', 'વિગતો');
-    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'વધુ માહિતી અથવા પ્રશ્નો માટે, કૃપા કરીને લગ્ન આયોજકોનો સંપર્ક કરો.');
-    setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'તમારી હાજરી અમારી માટે સૌથી મોટું ભેટ છે. જોકે, જો તમે અમને ભેટ આપીને સન્માનિત કરવા માંગતા હોવ, તો અમારા ભવિષ્ય માટેનો તમારો યોગદાન હૃદયપૂર્વક આભારી રહેશે.');
-    setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'અમેલિયા');
+    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'વધુ માહિતી અથવા પ્રશ્નો માટે, કૃપા કરીને કન્યાના પિતા, મનીષ કટીરાનો સંપર્ક કરો.');
+    setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'આપની સ્નેહભરી ઉપસ્થિતિ અને આશીર્વાદ આ દિવસને વધુ યાદગાર બનાવશે.');
+    setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'મનીષ કટીરા');
+    setHtml('#rec2003555721 [field="tn_text_1772822026012000002"]', '7028028194');
 
     setHtml('#rec2003860951 [field="tn_text_1763405219328"]', 'હાજરીની પુષ્ટિ કરો');
     setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'અમારી આનંદમય ઉજવણીની તૈયારીઓમાં મદદ કરવા માટે, કૃપા કરીને તમારી હાજરીની પુષ્ટિ કરો.');
-    setText('#rec2003860951 .tn-atom__button-text', 'આરએસવીપી');
+    setText('#rec2003860951 .tn-atom__button-text', 'હાજરીની પુષ્ટિ કરો');
 
     setText('#popuptitle_2052858183', 'હાજરીની પુષ્ટિ કરો');
     setText('#rec2052858183 .t702__descr', 'કૃપા કરીને 20 માર્ચ પહેલાં RSVP કરો');
     setText('#field-title_5828866651120', 'તમારું નામ');
     setText('#field-title_5828866651121', 'શું તમે આવશો?');
-    setText('#field-title_5828866651122', 'શું તમને કોઈ ખાદ્ય અસહિષ્ણુતા છે?');
     setText('#rec2052858183 .t-checkboxes__item:nth-child(1) span', 'હા, હું આવીશ');
     setText('#rec2052858183 .t-checkboxes__item:nth-child(2) span', 'દુર્ભાગ્યે, હું આવી શકતો નથી');
     document.querySelectorAll('#rec2052858183 .t-checkbox').forEach(function(input, index) {
