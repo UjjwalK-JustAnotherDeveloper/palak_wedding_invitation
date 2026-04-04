@@ -732,6 +732,201 @@ function vpRenderLocationSection(lang) {
   vpSyncLocationSectionMode(section);
 }
 
+var VP_DRESS_CODE_CONTENT = {
+  en: {
+    ariaLabel: 'Dress code',
+    eyebrow: 'Style Notes',
+    title: 'Dress Code',
+    subtitle: 'Three celebrations, three distinct moods.',
+    swipeHint: 'Swipe to explore each celebration',
+    items: [
+      {
+        theme: 'haldi',
+        eventLabel: 'Haldi',
+        moodLabel: 'Day Festive',
+        dressValue: 'Yellow & Orange',
+        note: 'Bright, playful Indian wear with breezy comfort feels just right.'
+      },
+      {
+        theme: 'sangeet',
+        eventLabel: 'Sangeet & Cocktail',
+        moodLabel: 'Evening Glam',
+        dressValue: 'Glitz & Glam Indo Western',
+        note: 'Think shimmer, movement, and statement styling for the dance floor.',
+        offset: true
+      },
+      {
+        theme: 'wedding',
+        eventLabel: 'Wedding',
+        moodLabel: 'Regal Elegance',
+        dressValue: 'Royal Indian Attire',
+        note: 'Rich silhouettes, heirloom details, and polished Indian elegance shine here.'
+      }
+    ]
+  },
+  gu: {
+    ariaLabel: 'ડ્રેસ કોડ',
+    eyebrow: 'સ્ટાઇલ નોંધો',
+    title: 'ડ્રેસ કોડ',
+    subtitle: 'ત્રણ ઉજવણીઓ, ત્રણ અલગ માહોલ.',
+    swipeHint: 'દરેક ઉજવણી જોવા સ્વાઇપ કરો',
+    items: [
+      {
+        theme: 'haldi',
+        eventLabel: 'હળદી',
+        moodLabel: 'દિવસની મજા',
+        dressValue: 'પીળું અને કેસરિયો',
+        note: 'હળવા, ખુશખુશાલ અને આરામદાયક ભારતીય વસ્ત્રો અહીં સુંદર લાગશે.'
+      },
+      {
+        theme: 'sangeet',
+        eventLabel: 'સંગીત અને કોકટેલ',
+        moodLabel: 'સાંજનો ગ્લેમર',
+        dressValue: 'ગ્લિટ્ઝ એન્ડ ગ્લેમ ઇન્ડો વેસ્ટર્ન',
+        note: 'શિમર, ફ્લો અને સ્ટેટમેન્ટ સ્ટાઇલિંગ સાથે નિર્ભયતાથી ઝળહળો.',
+        offset: true
+      },
+      {
+        theme: 'wedding',
+        eventLabel: 'લગ્ન',
+        moodLabel: 'રાજસી શાન',
+        dressValue: 'રોયલ ઇન્ડિયન અટાયર',
+        note: 'ભવ્ય સિલુએટ્સ, સમૃદ્ધ કઢાઇ અને સજ્જડ ભારતીય શૈલી પસંદ કરો.'
+      }
+    ]
+  }
+};
+
+var VP_DRESS_CODE_IMAGES = {
+  haldi: 'assets/images/haldi_attire_couple.jpg',
+  sangeet: 'assets/images/sangeet_attire_couple.jpg',
+  wedding: 'assets/images/wedding_royal_attire_couple.jpg'
+};
+
+function vpCreateDressCodeMarkup() {
+  return [
+    '<section id="vp-dress-code-section" class="vp-dress" aria-label="Dress code">',
+    '  <div class="vp-dress__inner">',
+    '    <span class="vp-dress__eyebrow vp-dress__reveal" data-role="eyebrow"></span>',
+    '    <h2 class="vp-dress__title vp-dress__reveal" data-role="title"></h2>',
+    '    <div class="vp-dress__ornament vp-dress__reveal" aria-hidden="true">',
+    '      <span class="vp-dress__line"></span>',
+    '      <span class="vp-dress__dot"></span>',
+    '      <span class="vp-dress__dot"></span>',
+    '      <span class="vp-dress__dot"></span>',
+    '      <span class="vp-dress__line"></span>',
+    '    </div>',
+    '    <p class="vp-dress__subtitle vp-dress__reveal" data-role="subtitle"></p>',
+    '    <div class="vp-dress__grid" data-role="grid"></div>',
+    '    <p class="vp-dress__hint" data-role="hint"></p>',
+    '  </div>',
+    '</section>'
+  ].join('');
+}
+
+function vpBuildDressCodeCards(content) {
+  return content.items.map(function(item) {
+    var classes = ['vp-dress__card', 'vp-dress__reveal'];
+    var image = VP_DRESS_CODE_IMAGES[item.theme];
+    if (item.offset) classes.push('vp-dress__card--offset');
+
+    return [
+      '<article class="', classes.join(' '), '" data-theme="', item.theme, '">',
+      '  <div class="vp-dress__frame">',
+      '    <div class="vp-dress__photo">',
+      image ? '      <img src="' + image + '" alt="' + item.eventLabel + ' attire inspiration" loading="lazy">' : '',
+      '    </div>',
+      '    <div class="vp-dress__chips">',
+      '      <span class="vp-dress__chip vp-dress__chip--event">', item.eventLabel, '</span>',
+      '      <span class="vp-dress__chip vp-dress__chip--mood">', item.moodLabel, '</span>',
+      '    </div>',
+      '  </div>',
+      '  <div class="vp-dress__body">',
+      '    <h3 class="vp-dress__dress-value">', item.dressValue, '</h3>',
+      '    <p class="vp-dress__note">', item.note, '</p>',
+      '  </div>',
+      '</article>'
+    ].join('');
+  }).join('');
+}
+
+function vpEnsureDressCodeVisibility(section) {
+  if (!section || section.dataset.dressObserverReady === 'true') return;
+
+  section.dataset.dressObserverReady = 'true';
+
+  if (!('IntersectionObserver' in window)) {
+    section.classList.add('is-visible');
+    return;
+  }
+
+  var observer = new IntersectionObserver(function(entries, currentObserver) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        section.classList.add('is-visible');
+        currentObserver.disconnect();
+      }
+    });
+  }, {
+    threshold: 0.2
+  });
+
+  observer.observe(section);
+}
+
+function vpEnsureDressCodeSection() {
+  var legacyRec = document.getElementById('rec2003451831');
+  if (!legacyRec) return null;
+
+  var legacyLayout = legacyRec.querySelector('.t396');
+  if (legacyLayout && legacyRec.dataset.vpDressHidden !== 'true') {
+    legacyLayout.style.display = 'none';
+    legacyLayout.setAttribute('aria-hidden', 'true');
+    legacyRec.dataset.vpDressHidden = 'true';
+  }
+
+  legacyRec.style.paddingTop = '0';
+  legacyRec.style.paddingBottom = '0';
+  legacyRec.classList.add('vp-dress-rec');
+
+  var section = document.getElementById('vp-dress-code-section');
+  if (!section) {
+    legacyRec.insertAdjacentHTML('afterbegin', vpCreateDressCodeMarkup());
+    section = document.getElementById('vp-dress-code-section');
+  }
+
+  vpEnsureDressCodeVisibility(section);
+  return section;
+}
+
+function vpRenderDressCodeSection(lang) {
+  var section = vpEnsureDressCodeSection();
+  if (!section) return;
+
+  var content = VP_DRESS_CODE_CONTENT[lang] || VP_DRESS_CODE_CONTENT.en;
+  var eyebrow = section.querySelector('[data-role="eyebrow"]');
+  var title = section.querySelector('[data-role="title"]');
+  var subtitle = section.querySelector('[data-role="subtitle"]');
+  var grid = section.querySelector('[data-role="grid"]');
+  var hint = section.querySelector('[data-role="hint"]');
+
+  section.setAttribute('aria-label', content.ariaLabel);
+  if (eyebrow) eyebrow.textContent = content.eyebrow;
+  if (title) title.textContent = content.title;
+  if (subtitle) subtitle.textContent = content.subtitle;
+  if (grid) grid.innerHTML = vpBuildDressCodeCards(content);
+  if (hint) hint.textContent = content.swipeHint || '';
+
+  if (section.classList.contains('is-visible')) {
+    section.classList.remove('is-visible');
+    window.requestAnimationFrame(function() {
+      window.requestAnimationFrame(function() {
+        section.classList.add('is-visible');
+      });
+    });
+  }
+}
+
 // Prevent multiple clicks on envelope
 document.addEventListener('DOMContentLoaded', function() {
   const envelope = document.querySelector('[data-elem-id="1773847037346"]');
@@ -889,11 +1084,7 @@ document.addEventListener('DOMContentLoaded', function() {
     vpRenderLocationSection('en');
     vpRenderEventTimeline('en');
     setHtml('#rec2002506421 [field="tn_text_1772803062504"]', '19Nov 8pm');
-
-    setHtml('#rec2003451831 [field="tn_text_1763405219328"]', 'Dress Code');
-    setHtml('#rec2003451831 [field="tn_text_1772813849329000001"]', 'We kindly invite you to dress in elegant attire that reflects the style and spirit of our special day.');
-    setHtml('#rec2003451831 [field="tn_text_1772814614231000014"]', 'Gentlemen:<br />Well-tailored suits with classic dress shoes are preferred.');
-    setHtml('#rec2003451831 [field="tn_text_1772814650506000015"]', 'Ladies:<br />Formal dresses in elegant, polished styles are encouraged.');
+    vpRenderDressCodeSection('en');
 
     setHtml('#rec2003555721 [field="tn_text_1771277026942000001"]', 'Details');
     setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'For additional information or questions, please contact the wedding organizers.');
@@ -940,11 +1131,7 @@ document.addEventListener('DOMContentLoaded', function() {
     vpRenderLocationSection('gu');
     vpRenderEventTimeline('gu');
     setHtml('#rec2002506421 [field="tn_text_1772803062504"]', '19Nov 8pm');
-
-    setHtml('#rec2003451831 [field="tn_text_1763405219328"]', 'ડ્રેસ કોડ');
-    setHtml('#rec2003451831 [field="tn_text_1772813849329000001"]', 'અમે નમ્ર વિનંતી કરીએ છીએ કે તમે અમારા વિશેષ દિવસની શૈલી અને ભાવનાને અનુરૂપ સજ્જન અને ભવ્ય વસ્ત્રોમાં પધારો.');
-    setHtml('#rec2003451831 [field="tn_text_1772814614231000014"]', 'પુરુષો:<br />સુઘડ સિલાયેલ સૂટ અને ક્લાસિક ડ્રેસ શૂઝને પ્રાધાન્ય આપવામાં આવે છે.');
-    setHtml('#rec2003451831 [field="tn_text_1772814650506000015"]', 'મહિલાઓ:<br />ભવ્ય અને સજ્જડ ઔપચારિક ડ્રેસ પહેરવા પ્રોત્સાહિત કરવામાં આવે છે.');
+    vpRenderDressCodeSection('gu');
 
     setHtml('#rec2003555721 [field="tn_text_1771277026942000001"]', 'વિગતો');
     setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'વધુ માહિતી અથવા પ્રશ્નો માટે, કૃપા કરીને લગ્ન આયોજકોનો સંપર્ક કરો.');
