@@ -103,6 +103,105 @@ document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();
 
 t_onReady(function() {t_onFuncLoad('t396_init',function() {t396_init('2052880283');});});
 
+var VP_OPENING_STAGE = {
+  recId: '2052880283',
+  artboardWidth: 1200,
+  artboardHeight: 850,
+  envelopeWidth: 1012,
+  envelopeHeight: 865
+};
+
+function vpApplyDesktopArtboardLayout(record) {
+  if (!record) return null;
+
+  var artboard = record.querySelector('.t396__artboard');
+  var carrier = record.querySelector('.t396__carrier');
+  var filter = record.querySelector('.t396__filter');
+  var wrapper = record.querySelector('.t396');
+  var elements = record.querySelectorAll('.tn-elem');
+
+  Array.prototype.forEach.call(elements, function(elem) {
+    var top = elem.getAttribute('data-field-top-value');
+    var left = elem.getAttribute('data-field-left-value');
+    var width = elem.getAttribute('data-field-width-value');
+    var height = elem.getAttribute('data-field-height-value');
+    var elemType = elem.getAttribute('data-elem-type');
+    var heightMode = elem.getAttribute('data-field-heightmode-value');
+
+    if (top !== null) elem.style.top = top + 'px';
+    if (left !== null) elem.style.left = left + 'px';
+    if (width !== null) elem.style.width = width + 'px';
+
+    if (height !== null) {
+      if (heightMode === 'fixed' || elemType === 'shape' || elemType === 'html') {
+        elem.style.height = height + 'px';
+      } else if (heightMode === 'hug' || elemType === 'image' || elemType === 'text' || elemType === 'button') {
+        elem.style.height = 'auto';
+      }
+    }
+  });
+
+  return {
+    artboard: artboard,
+    carrier: carrier,
+    filter: filter,
+    wrapper: wrapper
+  };
+}
+
+function vpGetViewportHeight() {
+  if (window.visualViewport && window.visualViewport.height) {
+    return Math.round(window.visualViewport.height);
+  }
+
+  return window.innerHeight || document.documentElement.clientHeight || VP_OPENING_STAGE.artboardHeight;
+}
+
+function vpUpdateOpeningStage() {
+  var config = VP_OPENING_STAGE;
+  var record = document.getElementById('rec' + config.recId);
+  var parts = vpApplyDesktopArtboardLayout(record);
+  var viewportWidth = window.innerWidth || document.documentElement.clientWidth || config.artboardWidth;
+  var viewportHeight = vpGetViewportHeight();
+  var aspectRatio = viewportWidth / Math.max(viewportHeight, 1);
+  var sideStrip = viewportWidth < 480 ? 0 : viewportWidth < 768 ? 18 : viewportWidth < 1200 ? 32 : 48;
+  var scaleByWidth = Math.max(viewportWidth - sideStrip * 2, 0) / config.envelopeWidth;
+  var scaleByHeight = viewportHeight / config.envelopeHeight;
+  var cropAllowance = viewportHeight < 520 ? 1.72 : aspectRatio > 1.55 ? 1.38 : 1.2;
+  var scale = Math.max(scaleByHeight, Math.min(scaleByWidth, scaleByHeight * cropAllowance));
+  var ctaScale = scale < 0.9 ? Math.min(1.22, 0.92 / scale) : 1;
+
+  if (!record || !parts || !parts.artboard) return;
+
+  record.style.setProperty('--vp-opening-scale', scale.toFixed(4));
+  record.style.setProperty('--vp-opening-stage-height', viewportHeight + 'px');
+  record.style.setProperty('--vp-opening-cta-scale', ctaScale.toFixed(3));
+
+  if (parts.artboard) parts.artboard.style.height = config.artboardHeight + 'px';
+  if (parts.carrier) parts.carrier.style.height = config.artboardHeight + 'px';
+  if (parts.filter) parts.filter.style.height = config.artboardHeight + 'px';
+  if (parts.wrapper) parts.wrapper.style.height = viewportHeight + 'px';
+
+  record.style.height = viewportHeight + 'px';
+  record.style.minHeight = viewportHeight + 'px';
+}
+
+function vpScheduleOpeningStageUpdate() {
+  window.requestAnimationFrame(vpUpdateOpeningStage);
+}
+
+t_onReady(function() {
+  vpUpdateOpeningStage();
+  window.setTimeout(vpScheduleOpeningStageUpdate, 0);
+  window.setTimeout(vpScheduleOpeningStageUpdate, 320);
+  window.addEventListener('resize', vpScheduleOpeningStageUpdate);
+  window.addEventListener('orientationchange', vpScheduleOpeningStageUpdate);
+  window.addEventListener('load', vpScheduleOpeningStageUpdate);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', vpScheduleOpeningStageUpdate);
+  }
+});
+
 function waitForButton(selector, callback) {
   const button = document.querySelector(selector);
   if (button) {
@@ -983,10 +1082,15 @@ function vpRenderDressCodeSection(lang) {
 
 // Prevent multiple clicks on envelope
 document.addEventListener('DOMContentLoaded', function() {
+  const openingRecord = document.getElementById('rec2052880283');
+  const allRecords = document.getElementById('allrecords');
   const envelope = document.querySelector('[data-elem-id="1773847037346"]');
+  const envelopeLabel = document.querySelector('#rec2052880283 [data-elem-id="1773926384566"]');
   const video = document.querySelector('video');
   const languageToggle = document.getElementById('language-toggle');
   const SCROLL_UNLOCK_DELAY = 4500;
+  const OPENING_DISMISS_DELAY = 3200;
+  const OPENING_HIDE_DELAY = 4100;
   const LANGUAGE_TOGGLE_HIDE_DELAY = 1000;
   const scrollKeys = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar']);
 
@@ -1027,6 +1131,45 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  function revealAudioControl(isPlaying) {
+    var audioControl = document.getElementById('audio-control');
+    var iconPlay = document.getElementById('icon-play');
+    var iconPause = document.getElementById('icon-pause');
+
+    if (audioControl) {
+      audioControl.style.visibility = 'visible';
+      audioControl.style.opacity = '1';
+    }
+
+    if (iconPlay && iconPause) {
+      iconPlay.style.display = isPlaying ? 'none' : 'block';
+      iconPause.style.display = isPlaying ? 'block' : 'none';
+    }
+  }
+
+  function dismissOpeningStage() {
+    if (!openingRecord || openingRecord.dataset.vpDismissed === 'true') return;
+
+    openingRecord.dataset.vpDismissed = 'true';
+    openingRecord.classList.add('vp-opening-stage--dismissing');
+
+    window.setTimeout(function() {
+      openingRecord.style.display = 'none';
+    }, Math.max(0, OPENING_HIDE_DELAY - OPENING_DISMISS_DELAY));
+  }
+
+  function restorePageLayoutAfterOpening() {
+    if (!allRecords) return;
+
+    allRecords.style.zoom = '';
+    allRecords.style.width = '';
+    allRecords.style.maxWidth = '';
+    allRecords.style.transform = '';
+    allRecords.style.transformOrigin = '';
+    allRecords.style.marginLeft = '';
+    allRecords.style.marginRight = '';
+  }
+
   if (envelope && video) {
     lockScroll();
     let clicked = false;
@@ -1034,38 +1177,54 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!clicked) {
         clicked = true;
         hideLanguageToggle();
+        vpBackgroundAudio.currentTime = 0;
+        vpBackgroundAudio.play().then(function() {
+          revealAudioControl(true);
+        }).catch(function(error) {
+          revealAudioControl(false);
+          console.warn('Background audio could not start automatically.', error);
+        });
+
+        video.play().catch(function(error) {
+          console.warn('Hero video could not start automatically.', error);
+        });
+
+        setTimeout(dismissOpeningStage, OPENING_DISMISS_DELAY);
         setTimeout(function() {
-          vpBackgroundAudio.currentTime = 0;
-          vpBackgroundAudio.play().then(function() {
-            var audioControl = document.getElementById('audio-control');
-            var iconPlay = document.getElementById('icon-play');
-            var iconPause = document.getElementById('icon-pause');
-            if (audioControl) {
-              audioControl.style.visibility = 'visible';
-              audioControl.style.opacity = '1';
-            }
-            if (iconPlay && iconPause) {
-              iconPlay.style.display = 'none';
-              iconPause.style.display = 'block';
-            }
-          }).catch(function(error) {
-            console.warn('Background audio could not start automatically.', error);
-          });
-        }, 500);
+          if (openingRecord) {
+            openingRecord.style.display = 'none';
+          }
+          restorePageLayoutAfterOpening();
+        }, OPENING_HIDE_DELAY);
+
         setTimeout(function() {
           unlockScroll();
         }, SCROLL_UNLOCK_DELAY);
-        // Start hero video after 2 seconds
-        setTimeout(() => {
-          video.play();
-        }, 2000);
       } else {
         event.stopImmediatePropagation();
         event.preventDefault();
         return false;
       }
     }, true); // Use capture phase
+
+    if (envelopeLabel) {
+      envelopeLabel.addEventListener('click', function(event) {
+        if (clicked) {
+          event.preventDefault();
+          return;
+        }
+
+        event.preventDefault();
+        envelope.click();
+      });
+    }
   }
+
+  window.addEventListener('resize', function() {
+    if (openingRecord && openingRecord.dataset.vpDismissed === 'true') {
+      restorePageLayoutAfterOpening();
+    }
+  });
 });
 
 // Language Toggle Functionality
@@ -1125,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_1763402147625"]', 'Palak<br /><br />Shubham');
     setHtml('[field="tn_text_176340398328864790"]', 'Wedding Day');
     setHtml('[field="tn_text_176340401720454780"]', '20.11.26');
-    setHtml('[field="tn_text_176340390975774690"]', '&');
+    setHtml('[field="tn_text_176340390975774690"]', 'Weds');
     setHtml('[field="tn_text_1773926384566"]', 'Click to open');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'Dear Friends and Family,');
@@ -1172,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_1763402147625"]', 'પલક<br /><br />શુભમ');
     setHtml('[field="tn_text_176340398328864790"]', 'લગ્ન દિવસ');
     setHtml('[field="tn_text_176340401720454780"]', '20.11.26');
-    setHtml('[field="tn_text_176340390975774690"]', '&');
+    setHtml('[field="tn_text_176340390975774690"]', 'વેડ્સ');
     setHtml('[field="tn_text_1773926384566"]', 'ખોલવા માટે ક્લિક કરો');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'પ્રિય મિત્રો અને પરિવાર,');
