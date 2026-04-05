@@ -202,35 +202,6 @@ t_onReady(function() {
   }
 });
 
-function waitForButton(selector, callback) {
-  const button = document.querySelector(selector);
-  if (button) {
-    callback(button);
-  } else {
-    setTimeout(() => waitForButton(selector, callback), 100);
-  }
-}
-
-waitForButton('.popup-enter', function() {
-  const audioControl = document.getElementById('audio-control');
-  const iconPlay = document.getElementById('icon-play');
-  const iconPause = document.getElementById('icon-pause');
-
-  if (!audioControl || !iconPlay || !iconPause) return;
-
-  audioControl.addEventListener('click', function() {
-    if (vpBackgroundAudio.paused) {
-      vpBackgroundAudio.play();
-      iconPlay.style.display = 'none';
-      iconPause.style.display = 'block';
-    } else {
-      vpBackgroundAudio.pause();
-      iconPlay.style.display = 'block';
-      iconPause.style.display = 'none';
-    }
-  });
-});
-
 t_onReady(function() {t_onFuncLoad('t396_init',function() {t396_init('2049114373');});});
 
 t_onReady(function() {t_onFuncLoad('t396_init',function() {t396_init('2002273681');});});
@@ -296,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var submitBtn = form.querySelector('[type="submit"]');
   var submitLabel = submitBtn ? submitBtn.querySelector('.t-btnflex__text') : null;
+  var popupContainer = document.querySelector('#rec2052858183 .t-popup__container');
   var popupDescription = document.querySelector('#rec2052858183 .t702__descr');
   var availabilityInputs = Array.prototype.slice.call(form.querySelectorAll('input.t-checkbox'));
 
@@ -321,7 +293,13 @@ document.addEventListener('DOMContentLoaded', function() {
     popupDescription.style.display = isVisible ? '' : 'none';
   }
 
+  function setSuccessState(isSuccess) {
+    if (!popupContainer) return;
+    popupContainer.classList.toggle('vp-rsvp-success-state', !!isSuccess);
+  }
+
   setDeadlineMessageVisible(true);
+  setSuccessState(false);
 
   form.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -363,10 +341,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }).then(function(){
       if (successBox) {
         successBox.style.display = 'block';
-        successBox.innerHTML = '<p>Thank you! We look forward to celebrating with you!</p>';
+        successBox.innerHTML = '<div class="vp-rsvp-success-card" role="status"><div class="vp-rsvp-success-badge" aria-hidden="true">✓</div><div class="vp-rsvp-success-copy"><strong>Thank you!</strong><span>We look forward to celebrating with you.</span></div></div>';
       }
       setDeadlineMessageVisible(false);
       if (inputsBox) inputsBox.style.display = 'none';
+      setSuccessState(true);
     }).catch(function(){
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -714,10 +693,11 @@ var VP_LOCATION_SECTION_CONTENT = {
   }
 };
 
-var VP_LOCATION_IMAGE = 'assets/images/image-gen_1-Photoroo.webp';
+var VP_LOCATION_IMAGE = 'assets/images/Haldi_location.webp';
 var VP_LOCATION_THEME_IMAGES = {
-  sangeet: 'assets/images/sangeet_location_image.webp',
-  shadi: 'assets/images/wedding_location_image.webp'
+  haldi: 'assets/images/Haldi_location.webp',
+  sangeet: 'assets/images/sangeet_location.webp',
+  shadi: 'assets/images/wedding_location.webp'
 };
 var VP_LOCATION_IMAGE_ALT = 'Chateau de Paon';
 var VP_LOCATION_MASK_IMAGE = 'assets/images/Mask_group_2_1_Trace.svg';
@@ -750,7 +730,7 @@ function vpEnsureLocationStyles() {
     '.vp-location__card[data-theme=\"sangeet\"]{--vp-location-accent:#7a4766;}',
     '.vp-location__card[data-theme=\"haldi\"]{--vp-location-accent:#b8892f;}',
     '.vp-location__card[data-theme=\"shadi\"]{--vp-location-accent:#6a2b3f;}',
-    '.vp-location__card[data-theme=\"sangeet\"] .vp-location__media img, .vp-location__card[data-theme=\"shadi\"] .vp-location__media img{object-fit:contain; padding:16px; box-sizing:border-box; mix-blend-mode:screen; filter:sepia(30%) saturate(85%) brightness(95%) drop-shadow(0 16px 24px rgba(70,37,37,0.12));}',
+    '.vp-location__card[data-theme=\"shadi\"] .vp-location__media img{filter:grayscale(100%) brightness(1.04) contrast(0.96);}',
     '.vp-location__body{padding:22px 22px 24px; display:flex; flex-direction:column; flex:1; min-height:258px;}',
     '.vp-location__tags{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}',
     '.vp-location__tag{display:inline-flex; align-self:flex-start; padding:5px 13px; border-radius:999px; background:var(--vp-location-accent, #66021f); color:#fff; font:700 clamp(9px, 0.68vw, 10px)/1.2 Arial, sans-serif; letter-spacing:0.12em; text-transform:uppercase;}',
@@ -928,7 +908,7 @@ var VP_DRESS_CODE_CONTENT = {
     eyebrow: 'Style Notes',
     title: 'Dress Code',
     subtitle: 'Three celebrations, three distinct moods.',
-    swipeHint: 'Swipe to explore each celebration',
+    swipeHint: '← Swipe to explore each celebration →',
     items: [
       {
         theme: 'haldi',
@@ -1123,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const allRecords = document.getElementById('allrecords');
   const envelope = document.querySelector('[data-elem-id="1773847037346"]');
   const envelopeLabel = document.querySelector('#rec2052880283 [data-elem-id="1773926384566"]');
+  const envelopeSubtitle = document.querySelector('#rec2052880283 [data-elem-id="1774451670001"]');
   const video = document.querySelector('video');
   const languageToggle = document.getElementById('language-toggle');
   const SCROLL_UNLOCK_DELAY = 4500;
@@ -1162,25 +1143,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function hideLanguageToggle() {
     if (languageToggle) {
-      setTimeout(function() {
+      window.setTimeout(function() {
         languageToggle.classList.add('is-hiding');
       }, LANGUAGE_TOGGLE_HIDE_DELAY);
-    }
-  }
-
-  function revealAudioControl(isPlaying) {
-    var audioControl = document.getElementById('audio-control');
-    var iconPlay = document.getElementById('icon-play');
-    var iconPause = document.getElementById('icon-pause');
-
-    if (audioControl) {
-      audioControl.style.visibility = 'visible';
-      audioControl.style.opacity = '1';
-    }
-
-    if (iconPlay && iconPause) {
-      iconPlay.style.display = isPlaying ? 'none' : 'block';
-      iconPause.style.display = isPlaying ? 'block' : 'none';
     }
   }
 
@@ -1215,10 +1180,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clicked = true;
         hideLanguageToggle();
         vpBackgroundAudio.currentTime = 0;
-        vpBackgroundAudio.play().then(function() {
-          revealAudioControl(true);
-        }).catch(function(error) {
-          revealAudioControl(false);
+        vpBackgroundAudio.play().catch(function(error) {
           console.warn('Background audio could not start automatically.', error);
         });
 
@@ -1246,6 +1208,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (envelopeLabel) {
       envelopeLabel.addEventListener('click', function(event) {
+        if (clicked) {
+          event.preventDefault();
+          return;
+        }
+
+        event.preventDefault();
+        envelope.click();
+      });
+    }
+
+    if (envelopeSubtitle) {
+      envelopeSubtitle.addEventListener('click', function(event) {
         if (clicked) {
           event.preventDefault();
           return;
@@ -1297,6 +1271,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  function setPhoneLink(selector, displayValue, phoneNumber) {
+    var safeDisplayValue = displayValue == null ? '' : String(displayValue);
+    var normalizedNumber = phoneNumber == null ? '' : String(phoneNumber).replace(/[^\d+]/g, '');
+    setHtml(selector, '<a class="vp-phone-link" href="tel:' + normalizedNumber + '">' + safeDisplayValue + '</a>');
+  }
+
   function setLanguage(lang) {
     localStorage.setItem('language', lang);
     document.documentElement.setAttribute('lang', lang === 'gu' ? 'gu' : 'en');
@@ -1323,9 +1303,10 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_176340401720454780"]', '20.11.26');
     setHtml('[field="tn_text_176340390975774690"]', 'Weds');
     setHtml('[field="tn_text_1773926384566"]', 'Click to open');
+    setHtml('[field="tn_text_1774451670001"]', 'With joyful hearts, we invite you to unfold our story.');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'Dear Friends and Family,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With love in their hearts and blessings from God,<br />the Katira and Srivastava families warmly invite you<br />to celebrate the wedding of their children,<br />Palak and Shubham,<br />and witness the start of their lifelong journey together.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With love in their hearts and blessings from God, the Katira and Srivastava families warmly invite you to celebrate the wedding of their children, Palak and Shubham, and witness the start of their lifelong journey together.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'The Celebration Begins In');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'Days');
@@ -1342,7 +1323,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'For additional information or questions, please contact the bride\'s father.');
     setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'Your gracious presence and blessings will make the day even more memorable.');
     setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'Manish Katira');
-    setHtml('#rec2003555721 [field="tn_text_1772822026012000002"]', '7028028194');
+    setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '7028028194', '+917028028194');
 
     setHtml('#rec2003860951 [field="tn_text_1763405219328"]', 'Confirm Your Attendance');
     setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'To help us prepare for a joyful celebration, kindly confirm your attendance.');
@@ -1362,6 +1343,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setHtml('#rec2003869491 [field="tn_text_1763405219328"]', 'Hope to see you there!');
     setHtml('#rec2003869491 [field="tn_text_1772813849329000001"]', 'Palak and Shubham');
+    setText('#vp-made-with-love', 'Made for Palak and Shubham with ❤️');
   }
 
   function setGujarati() {
@@ -1370,9 +1352,10 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_176340401720454780"]', '૨૦.૧૧.૨૬');
     setHtml('[field="tn_text_176340390975774690"]', 'વેડ્સ');
     setHtml('[field="tn_text_1773926384566"]', 'ખોલવા માટે ક્લિક કરો');
+    setHtml('[field="tn_text_1774451670001"]', 'આનંદભર્યા હૃદયોથી, અમે તમને અમારી વાર્તા ખુલ્લી જોવા આમંત્રિત કરીએ છીએ.');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'પ્રિય મિત્રો અને પરિવાર,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'હૃદયમાં પ્રેમ અને ભગવાનના આશીર્વાદ સાથે,<br />કટીરા અને શ્રીવાસ્તવ પરિવારો આપને<br />તેમના સંતાનો પલક અને શુભમના લગ્નોત્સવમાં<br />હાર્દિક આમંત્રણ આપે છે,<br />અને તેમની જીવનભરની સાથેની સફરની<br />શરૂઆતના સાક્ષી બનવા આમંત્રિત કરે છે.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'હૃદયમાં પ્રેમ અને ભગવાનના આશીર્વાદ સાથે, કટીરા અને શ્રીવાસ્તવ પરિવારો આપને તેમના સંતાનો પલક અને શુભમના લગ્નોત્સવમાં હાર્દિક આમંત્રણ આપે છે અને તેમની જીવનભરની સાથેની સફરની શરૂઆતના સાક્ષી બનવા આમંત્રિત કરે છે.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'ઉજવણી શરૂ થવામાં બાકી છે');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'દિવસ');
@@ -1389,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'વધુ માહિતી અથવા પ્રશ્નો માટે, કૃપા કરીને કન્યાના પિતાનો સંપર્ક કરો.');
     setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'આપની સ્નેહભરી ઉપસ્થિતિ અને આશીર્વાદ આ દિવસને વધુ યાદગાર બનાવશે.');
     setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'મનીષ કટીરા');
-    setHtml('#rec2003555721 [field="tn_text_1772822026012000002"]', '૭૦૨૮૦૨૮૧૯૪');
+    setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '૭૦૨૮૦૨૮૧૯૪', '+917028028194');
 
     setHtml('#rec2003860951 [field="tn_text_1763405219328"]', 'હાજરીની પુષ્ટિ કરો');
     setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'અમારી આનંદમય ઉજવણીની તૈયારીઓમાં મદદ કરવા માટે, કૃપા કરીને તમારી હાજરીની પુષ્ટિ કરો.');
@@ -1408,6 +1391,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setHtml('#rec2003869491 [field="tn_text_1763405219328"]', 'ત્યાં તમને જોવાની આશા છે!');
     setHtml('#rec2003869491 [field="tn_text_1772813849329000001"]', 'પલક અને શુભમ');
+    setText('#vp-made-with-love', 'પલક અને શુભમ માટે પ્રેમથી બનાવ્યું ❤️');
   }
 
   langSwitch.addEventListener('change', function() {
