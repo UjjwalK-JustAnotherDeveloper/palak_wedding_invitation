@@ -716,6 +716,15 @@ body[data-language="gu"] #vp-hero-scroll-cue .vp-hero-scroll-cue__label{
   overflow: hidden;
 }
 
+/* Match the floral base strip to the next section so iPhone doesn't show a seam */
+#rec2049114373 .tn-elem[data-elem-id="1763404892592"] .tn-atom {
+  background-color: #66021f !important;
+}
+
+#rec2049114373 .tn-elem[data-elem-id="1773404252006000001"] .tn-atom {
+  background-image: linear-gradient(0turn, rgba(102, 2, 31, 1) 0%, rgba(102, 2, 31, 0) 100%) !important;
+}
+
 #rec2049114373 .tn-elem[data-elem-id="1773404715908"] { /* 8ruby.webp */
   top: calc(100vh - 126px) !important;
 }
@@ -834,6 +843,11 @@ body[data-language="gu"] #vp-hero-scroll-cue .vp-hero-scroll-cue__label{
 }
 
 @media screen and (max-width: 639px) {
+  #rec2002273681 {
+    margin-top: -2px;
+    padding-top: 32px !important;
+  }
+
   #rec2049114373 .tn-elem[data-elem-id="176340390975774690"] {
     width: 156px !important;
   }
