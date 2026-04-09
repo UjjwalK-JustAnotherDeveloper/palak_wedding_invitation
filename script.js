@@ -604,7 +604,14 @@ function vpInitEventTimelineAnimation(timeline) {
 
   var totalLength = path.getTotalLength();
   var rafId = 0;
-  var ticking = false;
+  var isAnimating = false;
+  var timelineTop = 0;
+  var timelineHeight = 0;
+  var currentProgress = 0;
+  var targetProgress = 0;
+  var sampleCount = Math.max(120, Math.round(totalLength / 3));
+  var pathSamples = [];
+  var smoothFactor = window.matchMedia('(pointer: coarse)').matches ? 0.22 : 0.3;
   var planeConfig = {
     width: 44,
     height: 44,
@@ -640,47 +647,132 @@ function vpInitEventTimelineAnimation(timeline) {
     return progress * progress * (3 - 2 * progress);
   }
 
-  function positionPlane(progress) {
+  function getPageScrollY() {
+    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+
+  function getViewportHeight() {
+    if (window.visualViewport && window.visualViewport.height) {
+      return Math.round(window.visualViewport.height);
+    }
+
+    return window.innerHeight || document.documentElement.clientHeight || 1;
+  }
+
+  function buildPlaneSample(progress) {
     var length = totalLength * progress;
     var bodyPoint = path.getPointAtLength(length);
     var tipPoint = path.getPointAtLength(Math.min(totalLength, length + planeGuideLength));
     var worldGuideAngle = Math.atan2(tipPoint.y - bodyPoint.y, tipPoint.x - bodyPoint.x);
     var rotationInRadians = worldGuideAngle - planeGuideAngle;
     var rotation = rotationInRadians * 180 / Math.PI;
-    // Map the plane's internal body guide onto the dotted path so both the nose and fuselage visually follow it.
     var offsetX = planeBodyOffset.x * Math.cos(rotationInRadians) - planeBodyOffset.y * Math.sin(rotationInRadians);
     var offsetY = planeBodyOffset.x * Math.sin(rotationInRadians) + planeBodyOffset.y * Math.cos(rotationInRadians);
-    var centerX = bodyPoint.x - offsetX;
-    var centerY = bodyPoint.y - offsetY;
 
-    planeGroup.setAttribute('transform', 'translate(' + centerX + ' ' + centerY + ') rotate(' + rotation + ')');
+    return {
+      progress: progress,
+      x: bodyPoint.x - offsetX,
+      y: bodyPoint.y - offsetY,
+      rotation: rotation
+    };
   }
 
-  function updateTimeline() {
-    ticking = false;
+  function rebuildPathSamples() {
+    pathSamples = [];
+
+    for (var index = 0; index <= sampleCount; index += 1) {
+      pathSamples.push(buildPlaneSample(index / sampleCount));
+    }
+  }
+
+  function interpolateAngle(start, end, progress) {
+    var delta = ((end - start + 540) % 360) - 180;
+    return start + (delta * progress);
+  }
+
+  function positionPlane(progress) {
+    var boundedProgress = clamp(progress, 0, 1);
+    var scaledIndex = boundedProgress * sampleCount;
+    var baseIndex = Math.floor(scaledIndex);
+    var nextIndex = Math.min(sampleCount, baseIndex + 1);
+    var localProgress = scaledIndex - baseIndex;
+    var from = pathSamples[baseIndex] || pathSamples[0];
+    var to = pathSamples[nextIndex] || from;
+    var centerX = from.x + ((to.x - from.x) * localProgress);
+    var centerY = from.y + ((to.y - from.y) * localProgress);
+    var rotation = interpolateAngle(from.rotation, to.rotation, localProgress);
+
+    planeGroup.setAttribute('transform', 'translate(' + centerX.toFixed(2) + ' ' + centerY.toFixed(2) + ') rotate(' + rotation.toFixed(2) + ')');
+  }
+
+  function measureTimeline() {
     var rect = timeline.getBoundingClientRect();
-    var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    var rawProgress = (viewportHeight - rect.top) / (viewportHeight + rect.height);
-    var progress = ease(clamp(rawProgress, 0, 1));
-    positionPlane(progress);
+    timelineTop = rect.top + getPageScrollY();
+    timelineHeight = rect.height || timeline.offsetHeight || 1;
+  }
+
+  function updateTargetProgress() {
+    var viewportHeight = getViewportHeight();
+    var rawProgress = ((getPageScrollY() + viewportHeight) - timelineTop) / (viewportHeight + timelineHeight);
+    targetProgress = ease(clamp(rawProgress, 0, 1));
+  }
+
+  function renderTimeline() {
+    var delta = targetProgress - currentProgress;
+
+    if (Math.abs(delta) < 0.0012) {
+      currentProgress = targetProgress;
+      positionPlane(currentProgress);
+      isAnimating = false;
+      rafId = 0;
+      return;
+    }
+
+    currentProgress += delta * smoothFactor;
+    positionPlane(currentProgress);
+    rafId = window.requestAnimationFrame(renderTimeline);
   }
 
   function requestTick() {
-    if (ticking) return;
-    ticking = true;
-    rafId = window.requestAnimationFrame(updateTimeline);
+    updateTargetProgress();
+
+    if (isAnimating) return;
+
+    isAnimating = true;
+    rafId = window.requestAnimationFrame(renderTimeline);
   }
 
-  timeline.vpTimelineRefresh = requestTick;
+  function refreshTimeline() {
+    measureTimeline();
+    updateTargetProgress();
+    if (!isAnimating) {
+      currentProgress = targetProgress;
+      positionPlane(currentProgress);
+    } else {
+      requestTick();
+    }
+  }
+
+  rebuildPathSamples();
+  measureTimeline();
+  timeline.vpTimelineRefresh = refreshTimeline;
   positionPlane(0);
   requestTick();
   window.addEventListener('scroll', requestTick, { passive: true });
-  window.addEventListener('resize', requestTick);
+  window.addEventListener('resize', refreshTimeline);
+  window.addEventListener('orientationchange', refreshTimeline);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', refreshTimeline);
+  }
 
   window.addEventListener('beforeunload', function() {
     if (rafId) window.cancelAnimationFrame(rafId);
     window.removeEventListener('scroll', requestTick);
-    window.removeEventListener('resize', requestTick);
+    window.removeEventListener('resize', refreshTimeline);
+    window.removeEventListener('orientationchange', refreshTimeline);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', refreshTimeline);
+    }
   });
 }
 
@@ -1374,7 +1466,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const HERO_SCROLL_CUE_DELAY = 5000;
   const HERO_STUCK_PEEK_DELAY = 6000;
   const HERO_SCROLL_THRESHOLD = 4;
-  const HERO_PEEK_TRAVEL_DURATION = 200;
+  const HERO_PEEK_TRAVEL_DURATION = 500;
   const HERO_PEEK_HOLD_DELAY = 1000;
   const scrollKeys = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar']);
   let heroGuidanceStarted = false;
@@ -1382,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let heroCueTimeout = 0;
   let heroPeekTimeout = 0;
   let heroPeekReturnTimeout = 0;
-  let heroPeekCompleteTimeout = 0;
+  let heroPeekAnimationFrame = 0;
   let autoPeekTarget = 0;
   let autoPeekHomeY = 0;
   let autoPeekInProgress = false;
@@ -1467,9 +1559,9 @@ document.addEventListener('DOMContentLoaded', function() {
       heroPeekReturnTimeout = 0;
     }
 
-    if (heroPeekCompleteTimeout) {
-      window.clearTimeout(heroPeekCompleteTimeout);
-      heroPeekCompleteTimeout = 0;
+    if (heroPeekAnimationFrame) {
+      window.cancelAnimationFrame(heroPeekAnimationFrame);
+      heroPeekAnimationFrame = 0;
     }
   }
 
@@ -1479,19 +1571,65 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  function easeHeroPeekProgress(progress) {
+    return progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+  }
+
+  function animateHeroPeekScroll(targetY, duration, onComplete) {
+    var startY = getCurrentScrollY();
+    var distance = targetY - startY;
+    var startTime = 0;
+
+    if (heroPeekAnimationFrame) {
+      window.cancelAnimationFrame(heroPeekAnimationFrame);
+      heroPeekAnimationFrame = 0;
+    }
+
+    if (!distance || duration <= 0) {
+      window.scrollTo(0, targetY);
+      if (typeof onComplete === 'function') {
+        onComplete();
+      }
+      return;
+    }
+
+    function step(timestamp) {
+      if (heroGuidanceDismissed) {
+        heroPeekAnimationFrame = 0;
+        return;
+      }
+
+      if (!startTime) {
+        startTime = timestamp;
+      }
+
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var easedProgress = easeHeroPeekProgress(progress);
+      var nextY = Math.round(startY + distance * easedProgress);
+
+      window.scrollTo(0, nextY);
+
+      if (progress < 1) {
+        heroPeekAnimationFrame = window.requestAnimationFrame(step);
+        return;
+      }
+
+      heroPeekAnimationFrame = 0;
+      if (typeof onComplete === 'function') {
+        onComplete();
+      }
+    }
+
+    heroPeekAnimationFrame = window.requestAnimationFrame(step);
+  }
+
   function dismissHeroGuidance() {
     if (heroGuidanceDismissed) return;
 
     heroGuidanceDismissed = true;
     clearHeroGuidanceTimers();
-
-    if (autoPeekInProgress) {
-      window.scrollTo({
-        top: getCurrentScrollY(),
-        behavior: 'auto'
-      });
-    }
-
     autoPeekInProgress = false;
     hideHeroScrollCue();
   }
@@ -1564,23 +1702,15 @@ document.addEventListener('DOMContentLoaded', function() {
       autoPeekTarget = targetScroll;
       autoPeekInProgress = true;
 
-      window.scrollTo({
-        top: targetScroll,
-        behavior: 'smooth'
-      });
-
-      heroPeekReturnTimeout = window.setTimeout(function() {
+      animateHeroPeekScroll(targetScroll, HERO_PEEK_TRAVEL_DURATION, function() {
         if (heroGuidanceDismissed) return;
 
-        window.scrollTo({
-          top: autoPeekHomeY,
-          behavior: 'smooth'
-        });
-      }, HERO_PEEK_TRAVEL_DURATION + HERO_PEEK_HOLD_DELAY);
-
-      heroPeekCompleteTimeout = window.setTimeout(function() {
-        autoPeekInProgress = false;
-      }, HERO_PEEK_TRAVEL_DURATION * 2 + HERO_PEEK_HOLD_DELAY + 120);
+        heroPeekReturnTimeout = window.setTimeout(function() {
+          animateHeroPeekScroll(autoPeekHomeY, HERO_PEEK_TRAVEL_DURATION, function() {
+            autoPeekInProgress = false;
+          });
+        }, HERO_PEEK_HOLD_DELAY);
+      });
     }, HERO_STUCK_PEEK_DELAY);
   }
 

@@ -1071,10 +1071,14 @@ body[data-language="gu"] #vp-hero-scroll-cue .vp-hero-scroll-cue__label{
   transform-box: fill-box;
   transform-origin: center;
   opacity: 1;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 #rec2002506421 .vp-event-timeline__plane {
   overflow: visible;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @media screen and (max-width: 1199px) {
