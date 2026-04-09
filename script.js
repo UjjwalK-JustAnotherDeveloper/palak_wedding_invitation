@@ -101,6 +101,94 @@ window.dataLayer=window.dataLayer||[];
 (function() {if((/bot|google|yandex|baidu|bing|msn|duckduckbot|teoma|slurp|crawler|spider|robot|crawling|facebook/i.test(navigator.userAgent))===false&&typeof(sessionStorage)!='undefined'&&sessionStorage.getItem('visited')!=='y'&&document.visibilityState){var style=document.createElement('style');style.type='text/css';style.innerHTML='@media screen and (min-width: 980px) {.t-records {opacity: 0;}.t-records_animated {-webkit-transition: opacity ease-in-out .2s;-moz-transition: opacity ease-in-out .2s;-o-transition: opacity ease-in-out .2s;transition: opacity ease-in-out .2s;}.t-records.t-records_visible {opacity: 1;}}';document.getElementsByTagName('head')[0].appendChild(style);function t_setvisRecs(){var alr=document.querySelectorAll('.t-records');Array.prototype.forEach.call(alr,function(el) {el.classList.add("t-records_animated");});setTimeout(function() {Array.prototype.forEach.call(alr,function(el) {el.classList.add("t-records_visible");});sessionStorage.setItem("visited","y");},400);}
 document.addEventListener('DOMContentLoaded',t_setvisRecs);}})();
 
+// Force a clean restart when Chrome restores a stale tab/session.
+var VP_SESSION_RESTORE = {
+  suspendedAtKey: 'vp-session-suspended-at',
+  reloadingKey: 'vp-session-reloading',
+  restoreThresholdMs: 30000
+};
+
+function vpGetSessionValue(key) {
+  try {
+    return typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(key) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function vpSetSessionValue(key, value) {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(key, value);
+    }
+  } catch (error) {}
+}
+
+function vpRemoveSessionValue(key) {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(key);
+    }
+  } catch (error) {}
+}
+
+function vpMarkSessionSuspended() {
+  vpSetSessionValue(VP_SESSION_RESTORE.suspendedAtKey, String(Date.now()));
+}
+
+function vpPrepareFreshSessionReload() {
+  if (vpGetSessionValue(VP_SESSION_RESTORE.reloadingKey) === 'y') return false;
+
+  vpSetSessionValue(VP_SESSION_RESTORE.reloadingKey, 'y');
+  vpRemoveSessionValue('visited');
+  vpRemoveSessionValue(VP_SESSION_RESTORE.suspendedAtKey);
+  return true;
+}
+
+function vpClearSessionSuspendMarker() {
+  vpRemoveSessionValue(VP_SESSION_RESTORE.suspendedAtKey);
+  vpRemoveSessionValue(VP_SESSION_RESTORE.reloadingKey);
+}
+
+function vpShouldReloadFreshSession(event) {
+  if (document.visibilityState === 'hidden') return false;
+  if (event && event.type === 'pageshow' && event.persisted) return true;
+  if (document.wasDiscarded === true) return true;
+
+  var suspendedAt = parseInt(vpGetSessionValue(VP_SESSION_RESTORE.suspendedAtKey), 10);
+  if (isNaN(suspendedAt)) return false;
+
+  return Date.now() - suspendedAt >= VP_SESSION_RESTORE.restoreThresholdMs;
+}
+
+function vpHandleSessionRestore(event) {
+  if (!vpShouldReloadFreshSession(event)) {
+    vpClearSessionSuspendMarker();
+    return;
+  }
+
+  if (!vpPrepareFreshSessionReload()) return;
+  window.location.reload();
+}
+
+(function vpInitSessionRestoreGuard() {
+  vpHandleSessionRestore();
+  window.addEventListener('pageshow', vpHandleSessionRestore);
+  window.addEventListener('pagehide', vpMarkSessionSuspended);
+  window.addEventListener('beforeunload', vpMarkSessionSuspended);
+  window.addEventListener('focus', function() {
+    if (!document.hidden) {
+      vpHandleSessionRestore();
+    }
+  });
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+      vpHandleSessionRestore();
+    }
+  });
+  document.addEventListener('freeze', vpMarkSessionSuspended);
+})();
+
 t_onReady(function() {t_onFuncLoad('t396_init',function() {t396_init('2052880283');});});
 
 var VP_OPENING_STAGE = {
@@ -245,6 +333,21 @@ var vpBackgroundAudio = new Audio('assets/music/nastelbom-romantic-454545.mp3');
 vpBackgroundAudio.loop = true;
 vpBackgroundAudio.preload = 'auto';
 
+function vpPauseBackgroundAudio() {
+  if (!vpBackgroundAudio.paused) {
+    vpBackgroundAudio.pause();
+  }
+}
+
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    vpPauseBackgroundAudio();
+  }
+});
+
+window.addEventListener('blur', vpPauseBackgroundAudio);
+window.addEventListener('pagehide', vpPauseBackgroundAudio);
+
 /* ════════════════════════════════════════════════════════════════
    CUSTOM — RSVP → Google Sheets
    ─────────────────────────────────────────────────────────────
@@ -360,9 +463,9 @@ var VP_EVENT_TIMELINE_CONTENT = {
   en: {
     title: 'Event Timeline',
     items: [
-      { text: '19Nov 8pm - Sangeet and Cocktail Night', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
-      { text: '20Nov 10am - Haldi', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
-      { text: '20Nov 7pm - Shadi Night', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
+      { text: '19 Nov 8 pm - Sangeet and Cocktail Night', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { text: '20 Nov 10 am - Haldi', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
+      { text: '20 Nov 7 pm - Shadi Night', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
     ]
   },
   gu: {
@@ -620,9 +723,9 @@ var VP_LOCATION_SECTION_CONTENT = {
     note: 'Each celebration has its own venue. Please check the details on each card before traveling.',
     items: [
       {
-        theme: 'haldi',
-        tags: ['Haldi', 'Stay'],
-        date: 'Friday \u00b7 20 Nov 2026 \u00b7 10:00 AM',
+        theme: 'stay',
+        tag: 'Stay',
+        date: 'Thursday \u00b7 19 Nov 2026 to Saturday \u00b7 21 Nov 2026',
         details: [
           { label: 'Check-in', value: 'Thursday \u00b7 19 Nov 2026 \u00b7 12:00 PM' },
           { label: 'Check-out', value: 'Saturday \u00b7 21 Nov 2026 \u00b7 11:00 AM' }
@@ -639,6 +742,15 @@ var VP_LOCATION_SECTION_CONTENT = {
         venue: 'The Palms Town & Country Club',
         address: 'B Block, Sushant Lok, Phase I, Gurgaon - 122001, India',
         mapUrl: 'https://www.google.com/maps/search/?api=1&query=The%20Palms%20Town%20%26%20Country%20Club%2C%20B%20Block%2C%20Sushant%20Lok%2C%20Phase%20I%2C%20Gurgaon%20-%20122001%2C%20India',
+        cta: 'Get Directions'
+      },
+      {
+        theme: 'haldi',
+        tag: 'Haldi',
+        date: 'Friday \u00b7 20 Nov 2026 \u00b7 10:00 AM',
+        venue: 'FabHotel Golf Inn',
+        address: 'Golf Inn 637, Sector 43, Gurgaon 122002, India',
+        mapUrl: 'https://maps.app.goo.gl/Gawg7uYu8j2GJ91f7',
         cta: 'Get Directions'
       },
       {
@@ -659,9 +771,9 @@ var VP_LOCATION_SECTION_CONTENT = {
     note: 'દરેક કાર્યક્રમનું સ્થળ અલગ છે. નીકળતા પહેલાં દરેક કાર્ડ તપાસો.',
     items: [
       {
-        theme: 'haldi',
-        tags: ['હળદી', 'રહેઠાણ'],
-        date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સવારે 10:00',
+        theme: 'stay',
+        tag: 'રહેઠાણ',
+        date: 'ગુરુવાર \u00b7 19 નવેમ્બર 2026 થી શનિવાર \u00b7 21 નવેમ્બર 2026',
         details: [
           { label: 'ચેક-ઇન', value: 'ગુરુવાર \u00b7 19 નવેમ્બર 2026 \u00b7 બપોરે 12:00' },
           { label: 'ચેક-આઉટ', value: 'શનિવાર \u00b7 21 નવેમ્બર 2026 \u00b7 સવારે 11:00' }
@@ -681,6 +793,15 @@ var VP_LOCATION_SECTION_CONTENT = {
         cta: 'નકશો ખોલો'
       },
       {
+        theme: 'haldi',
+        tag: 'હળદી',
+        date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સવારે 10:00',
+        venue: 'ફેબહોટેલ ગોલ્ફ ઇન',
+        address: 'ગોલ્ફ ઇન 637, સેક્ટર 43, ગુરુગ્રામ 122002, ભારત',
+        mapUrl: 'https://maps.app.goo.gl/Gawg7uYu8j2GJ91f7',
+        cta: 'નકશો ખોલો'
+      },
+      {
         theme: 'shadi',
         tag: 'લગ્ન રાત્રિ',
         date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સાંજ 7:00',
@@ -695,6 +816,7 @@ var VP_LOCATION_SECTION_CONTENT = {
 
 var VP_LOCATION_IMAGE = 'assets/images/Haldi_location.webp';
 var VP_LOCATION_THEME_IMAGES = {
+  stay: 'assets/images/Haldi_location.webp',
   haldi: 'assets/images/Haldi_location.webp',
   sangeet: 'assets/images/sangeet_location.webp',
   shadi: 'assets/images/wedding_location.webp'
@@ -723,10 +845,12 @@ function vpEnsureLocationStyles() {
     '.vp-location__note{width:100%; margin:0; color:#5a2e24; font:400 clamp(14px, 1.05vw, 16px)/1.68 Arial, sans-serif; text-align:left; text-wrap:pretty;}',
     '.vp-location__note-text{display:block;}',
     '.vp-location__cards{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:22px;}',
+    '.vp-location__cards.vp-location__cards--four{grid-template-columns:repeat(2, minmax(0, 1fr)); max-width:860px; margin:0 auto;}',
     '.vp-location__card{display:flex; flex-direction:column; background:#fff8f2; border:1px solid rgba(216,184,163,0.52); border-radius:18px; overflow:hidden; box-shadow:0 18px 36px rgba(88,49,49,0.08); min-width:0;}',
     '.vp-location__media{position:relative; aspect-ratio:4/3; overflow:hidden; background:#fff8f2; isolation:isolate; flex-shrink:0;}',
     '.vp-location__media::after{content:\"\"; position:absolute; inset:0; background:linear-gradient(180deg, rgba(19,7,11,0.08), rgba(19,7,11,0.34));}',
     '.vp-location__media img{width:100%; height:100%; object-fit:cover; display:block; filter:sepia(30%) saturate(85%) brightness(95%);}',
+    '.vp-location__card[data-theme=\"stay\"]{--vp-location-accent:#617a58;}',
     '.vp-location__card[data-theme=\"sangeet\"]{--vp-location-accent:#7a4766;}',
     '.vp-location__card[data-theme=\"haldi\"]{--vp-location-accent:#b8892f;}',
     '.vp-location__card[data-theme=\"shadi\"]{--vp-location-accent:#6a2b3f;}',
@@ -754,7 +878,7 @@ function vpEnsureLocationStyles() {
     '.vp-location--mobile .vp-location__callout{margin-bottom:22px; padding:13px 16px; gap:10px;}',
     '.vp-location--mobile .vp-location__callout-icon{width:28px; height:28px; font-size:13px;}',
     '.vp-location--mobile .vp-location__note{font-size:14px;}',
-    '.vp-location--mobile .vp-location__cards{display:flex; gap:16px; overflow-x:auto; margin:0 -24px; padding:4px 24px 16px; scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch;}',
+    '.vp-location--mobile .vp-location__cards{display:flex; gap:16px; overflow-x:auto; margin:0 -24px; padding:4px 24px 16px; scroll-snap-type:x proximity; scrollbar-width:none; overscroll-behavior-x:contain; overscroll-behavior-y:auto; touch-action:pan-y pinch-zoom; cursor:grab; -webkit-overflow-scrolling:touch;}',
     '.vp-location--mobile .vp-location__cards::-webkit-scrollbar{display:none;}',
     '.vp-location--mobile .vp-location__card{width:78vw; max-width:320px; flex:0 0 auto; scroll-snap-align:start;}',
     '.vp-location--mobile .vp-location__body{min-height:236px;}',
@@ -896,7 +1020,11 @@ function vpRenderLocationSection(lang) {
 
   if (eyebrow) eyebrow.textContent = content.eyebrow;
   if (title) title.textContent = content.title;
-  if (cards) cards.innerHTML = vpBuildLocationCards(content.items, lang);
+  if (cards) {
+    cards.classList.toggle('vp-location__cards--four', content.items.length >= 4);
+    cards.innerHTML = vpBuildLocationCards(content.items, lang);
+    vpEnhanceHorizontalScroller(cards);
+  }
   if (hint) hint.textContent = content.hint;
   if (note) note.textContent = content.note;
   vpSyncLocationSectionMode(section);
@@ -1084,7 +1212,10 @@ function vpRenderDressCodeSection(lang) {
   if (eyebrow) eyebrow.textContent = content.eyebrow;
   if (title) title.textContent = content.title;
   if (subtitle) subtitle.textContent = content.subtitle;
-  if (grid) grid.innerHTML = vpBuildDressCodeCards(content);
+  if (grid) {
+    grid.innerHTML = vpBuildDressCodeCards(content);
+    vpEnhanceHorizontalScroller(grid);
+  }
   if (hint) hint.textContent = content.swipeHint || '';
 
   if (section.classList.contains('is-visible')) {
@@ -1097,20 +1228,164 @@ function vpRenderDressCodeSection(lang) {
   }
 }
 
+function vpNormalizeWheelDelta(event, delta) {
+  if (event.deltaMode === 1) return delta * 16;
+  if (event.deltaMode === 2) return delta * (window.innerHeight || 0);
+  return delta;
+}
+
+// Keep vertical page scrolling natural inside horizontal carousels.
+function vpEnhanceHorizontalScroller(scroller) {
+  if (!scroller || scroller.dataset.vpScrollerReady === 'true') return;
+
+  scroller.dataset.vpScrollerReady = 'true';
+
+  var dragState = null;
+  var suppressClick = false;
+
+  function canScrollHorizontally() {
+    return scroller.scrollWidth > scroller.clientWidth + 8;
+  }
+
+  function clearDragState() {
+    if (dragState && dragState.dragging) {
+      scroller.classList.remove('vp-horizontal-scroll--dragging');
+      suppressClick = true;
+      window.setTimeout(function() {
+        suppressClick = false;
+      }, 0);
+    }
+
+    dragState = null;
+  }
+
+  scroller.addEventListener('mousedown', function(event) {
+    if (!canScrollHorizontally() || event.button !== 0) return;
+
+    dragState = {
+      startX: event.clientX,
+      startScrollLeft: scroller.scrollLeft,
+      dragging: false
+    };
+  });
+
+  document.addEventListener('mousemove', function(event) {
+    if (!dragState) return;
+
+    var deltaX = event.clientX - dragState.startX;
+
+    if (!dragState.dragging) {
+      if (Math.abs(deltaX) < 6) return;
+      dragState.dragging = true;
+      scroller.classList.add('vp-horizontal-scroll--dragging');
+    }
+
+    event.preventDefault();
+    scroller.scrollLeft = dragState.startScrollLeft - deltaX;
+  });
+
+  document.addEventListener('mouseup', clearDragState);
+  window.addEventListener('blur', clearDragState);
+
+  scroller.addEventListener('dragstart', function(event) {
+    if (dragState) {
+      event.preventDefault();
+    }
+  });
+
+  scroller.addEventListener('click', function(event) {
+    if (!suppressClick) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+
+  scroller.addEventListener('wheel', function(event) {
+    if (!canScrollHorizontally()) return;
+
+    var absX = Math.abs(event.deltaX);
+    var absY = Math.abs(event.deltaY);
+    var isHorizontalIntent = event.shiftKey || absX > absY;
+
+    if (isHorizontalIntent) {
+      var horizontalDelta = event.shiftKey && absX < 1 ? event.deltaY : event.deltaX;
+      horizontalDelta = vpNormalizeWheelDelta(event, horizontalDelta);
+      if (!horizontalDelta) return;
+
+      event.preventDefault();
+      scroller.scrollLeft += horizontalDelta;
+      return;
+    }
+
+    if (!absY) return;
+
+    event.preventDefault();
+    window.scrollBy({
+      left: 0,
+      top: vpNormalizeWheelDelta(event, event.deltaY),
+      behavior: 'auto'
+    });
+  }, { passive: false });
+}
+
+function vpGetHeroScrollCueText() {
+  return document.body && document.body.getAttribute('data-language') === 'gu'
+    ? 'આગળ વધવા માટે સ્ક્રોલ કરો'
+    : 'Scroll to continue';
+}
+
+function vpUpdateHeroScrollCueLanguage() {
+  var label = document.querySelector('#vp-hero-scroll-cue .vp-hero-scroll-cue__label');
+  if (label) {
+    label.textContent = vpGetHeroScrollCueText();
+  }
+}
+
+function vpEnsureHeroScrollCue() {
+  var cue = document.getElementById('vp-hero-scroll-cue');
+
+  if (!cue && document.body) {
+    cue = document.createElement('div');
+    cue.id = 'vp-hero-scroll-cue';
+    cue.setAttribute('aria-hidden', 'true');
+    cue.innerHTML = '<div class="vp-hero-scroll-cue__label"></div><div class="vp-hero-scroll-cue__mouse"></div>';
+    document.body.appendChild(cue);
+  }
+
+  vpUpdateHeroScrollCueLanguage();
+  return cue;
+}
+
 // Prevent multiple clicks on envelope
 document.addEventListener('DOMContentLoaded', function() {
   const openingRecord = document.getElementById('rec2052880283');
   const allRecords = document.getElementById('allrecords');
+  const heroRecord = document.getElementById('rec2049114373');
+  const nextRecord = document.getElementById('rec2002273681');
   const envelope = document.querySelector('[data-elem-id="1773847037346"]');
   const envelopeLabel = document.querySelector('#rec2052880283 [data-elem-id="1773926384566"]');
   const envelopeSubtitle = document.querySelector('#rec2052880283 [data-elem-id="1774451670001"]');
   const video = document.querySelector('video');
   const languageToggle = document.getElementById('language-toggle');
+  const heroScrollCue = vpEnsureHeroScrollCue();
   const SCROLL_UNLOCK_DELAY = 4500;
   const OPENING_DISMISS_DELAY = 3200;
   const OPENING_HIDE_DELAY = 4100;
   const LANGUAGE_TOGGLE_HIDE_DELAY = 1000;
+  const HERO_SCROLL_CUE_DELAY = 5000;
+  const HERO_STUCK_PEEK_DELAY = 6000;
+  const HERO_SCROLL_THRESHOLD = 4;
+  const HERO_PEEK_TRAVEL_DURATION = 200;
+  const HERO_PEEK_HOLD_DELAY = 1000;
   const scrollKeys = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar']);
+  let heroGuidanceStarted = false;
+  let heroGuidanceDismissed = false;
+  let heroCueTimeout = 0;
+  let heroPeekTimeout = 0;
+  let heroPeekReturnTimeout = 0;
+  let heroPeekCompleteTimeout = 0;
+  let autoPeekTarget = 0;
+  let autoPeekHomeY = 0;
+  let autoPeekInProgress = false;
 
   function preventScroll(event) {
     event.preventDefault();
@@ -1172,6 +1447,148 @@ document.addEventListener('DOMContentLoaded', function() {
     allRecords.style.marginRight = '';
   }
 
+  function getCurrentScrollY() {
+    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+
+  function clearHeroGuidanceTimers() {
+    if (heroCueTimeout) {
+      window.clearTimeout(heroCueTimeout);
+      heroCueTimeout = 0;
+    }
+
+    if (heroPeekTimeout) {
+      window.clearTimeout(heroPeekTimeout);
+      heroPeekTimeout = 0;
+    }
+
+    if (heroPeekReturnTimeout) {
+      window.clearTimeout(heroPeekReturnTimeout);
+      heroPeekReturnTimeout = 0;
+    }
+
+    if (heroPeekCompleteTimeout) {
+      window.clearTimeout(heroPeekCompleteTimeout);
+      heroPeekCompleteTimeout = 0;
+    }
+  }
+
+  function hideHeroScrollCue() {
+    if (heroScrollCue) {
+      heroScrollCue.classList.remove('is-visible');
+    }
+  }
+
+  function dismissHeroGuidance() {
+    if (heroGuidanceDismissed) return;
+
+    heroGuidanceDismissed = true;
+    clearHeroGuidanceTimers();
+
+    if (autoPeekInProgress) {
+      window.scrollTo({
+        top: getCurrentScrollY(),
+        behavior: 'auto'
+      });
+    }
+
+    autoPeekInProgress = false;
+    hideHeroScrollCue();
+  }
+
+  function getHeroPeekTarget() {
+    var viewportHeight = vpGetViewportHeight();
+    var peekAmount = Math.max(54, Math.min(108, Math.round(viewportHeight * 0.11)));
+    var nextTop = nextRecord ? nextRecord.offsetTop : 0;
+
+    return Math.max(0, Math.round(nextTop - viewportHeight + peekAmount));
+  }
+
+  function handleHeroScrollProgress() {
+    if (!heroGuidanceStarted || heroGuidanceDismissed) return;
+
+    var currentY = getCurrentScrollY();
+
+    if (autoPeekInProgress) {
+      return;
+    }
+
+    if (currentY > HERO_SCROLL_THRESHOLD) {
+      dismissHeroGuidance();
+    }
+  }
+
+  function handleHeroScrollIntent(event) {
+    if (!heroGuidanceStarted || heroGuidanceDismissed) return;
+
+    if (event.type === 'keydown' && !scrollKeys.has(event.key)) {
+      return;
+    }
+
+    dismissHeroGuidance();
+  }
+
+  function startHeroGuidance() {
+    if (!heroScrollCue || !heroRecord || !nextRecord || heroGuidanceStarted || heroGuidanceDismissed) return;
+
+    if (getCurrentScrollY() > HERO_SCROLL_THRESHOLD) {
+      heroGuidanceDismissed = true;
+      return;
+    }
+
+    heroGuidanceStarted = true;
+    vpUpdateHeroScrollCueLanguage();
+
+    heroCueTimeout = window.setTimeout(function() {
+      if (heroGuidanceDismissed || getCurrentScrollY() > HERO_SCROLL_THRESHOLD) {
+        dismissHeroGuidance();
+        return;
+      }
+
+      heroScrollCue.classList.add('is-visible');
+    }, HERO_SCROLL_CUE_DELAY);
+
+    heroPeekTimeout = window.setTimeout(function() {
+      var targetScroll = getHeroPeekTarget();
+
+      if (heroGuidanceDismissed || getCurrentScrollY() > HERO_SCROLL_THRESHOLD) {
+        dismissHeroGuidance();
+        return;
+      }
+
+      if (targetScroll <= getCurrentScrollY() + 8) {
+        return;
+      }
+
+      autoPeekHomeY = getCurrentScrollY();
+      autoPeekTarget = targetScroll;
+      autoPeekInProgress = true;
+
+      window.scrollTo({
+        top: targetScroll,
+        behavior: 'smooth'
+      });
+
+      heroPeekReturnTimeout = window.setTimeout(function() {
+        if (heroGuidanceDismissed) return;
+
+        window.scrollTo({
+          top: autoPeekHomeY,
+          behavior: 'smooth'
+        });
+      }, HERO_PEEK_TRAVEL_DURATION + HERO_PEEK_HOLD_DELAY);
+
+      heroPeekCompleteTimeout = window.setTimeout(function() {
+        autoPeekInProgress = false;
+      }, HERO_PEEK_TRAVEL_DURATION * 2 + HERO_PEEK_HOLD_DELAY + 120);
+    }, HERO_STUCK_PEEK_DELAY);
+  }
+
+  window.addEventListener('scroll', handleHeroScrollProgress, { passive: true });
+  window.addEventListener('wheel', handleHeroScrollIntent, { passive: true });
+  window.addEventListener('touchmove', handleHeroScrollIntent, { passive: true });
+  window.addEventListener('keydown', handleHeroScrollIntent);
+
   if (envelope && video) {
     lockScroll();
     let clicked = false;
@@ -1198,6 +1615,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setTimeout(function() {
           unlockScroll();
+          startHeroGuidance();
         }, SCROLL_UNLOCK_DELAY);
       } else {
         event.stopImmediatePropagation();
@@ -1271,10 +1689,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function setPhoneLink(selector, displayValue, phoneNumber) {
+  function setPhoneLink(selector, displayValue, phoneNumber, hintText) {
     var safeDisplayValue = displayValue == null ? '' : String(displayValue);
+    var safeHintText = hintText == null ? '' : String(hintText);
     var normalizedNumber = phoneNumber == null ? '' : String(phoneNumber).replace(/[^\d+]/g, '');
-    setHtml(selector, '<a class="vp-phone-link" href="tel:' + normalizedNumber + '">' + safeDisplayValue + '</a>');
+    setHtml(
+      selector,
+      '<a class="vp-phone-link" href="tel:' + normalizedNumber + '" aria-label="' + safeHintText + ' ' + safeDisplayValue + '">' +
+        '<span class="vp-phone-link__hint">' +
+          '<span class="vp-phone-link__hint-icon" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+              '<path d="M22 16.92V20a2 2 0 0 1-2.18 2A19.8 19.8 0 0 1 3 5.18 2 2 0 0 1 5 3h3.09a2 2 0 0 1 2 1.72l.42 2.86a2 2 0 0 1-.57 1.72l-1.5 1.5a16 16 0 0 0 4.95 4.95l1.5-1.5a2 2 0 0 1 1.72-.57l2.86.42A2 2 0 0 1 22 16.92Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>' +
+            '</svg>' +
+          '</span>' +
+          '<span class="vp-phone-link__hint-text">' + safeHintText + '</span>' +
+        '</span>' +
+        '<span class="vp-phone-link__number">' + safeDisplayValue + '</span>' +
+      '</a>'
+    );
   }
 
   function setLanguage(lang) {
@@ -1295,6 +1727,8 @@ document.addEventListener('DOMContentLoaded', function() {
       toggle.style.background = 'rgb(102, 2, 31)';
       setGujarati();
     }
+
+    vpUpdateHeroScrollCueLanguage();
   }
 
   function setEnglish() {
@@ -1306,7 +1740,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_1774451670001"]', 'With joyful hearts, we invite you to unfold our story.');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'Dear Friends and Family,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With love in their hearts and blessings from God, the Katira and Srivastava families warmly invite you to celebrate the wedding of their children, Palak and Shubham, and witness the start of their lifelong journey together.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With love in their hearts and blessings from God, the Katira and Srivastava families warmly invite you to celebrate the wedding of their children, Palak and Shubham, to witness the start of their lifelong journey together.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'The Celebration Begins In');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'Days');
@@ -1316,14 +1750,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     vpRenderLocationSection('en');
     vpRenderEventTimeline('en');
-    setHtml('#rec2002506421 [field="tn_text_1772803062504"]', '19Nov 8pm');
+    setHtml('#rec2002506421 [field="tn_text_1772803062504"]', '19 Nov 8 pm');
     vpRenderDressCodeSection('en');
 
     setHtml('#rec2003555721 [field="tn_text_1771277026942000001"]', 'Details');
-    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'For additional information or questions, please contact the bride\'s father.');
+    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', '');
     setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'Your gracious presence and blessings will make the day even more memorable.');
-    setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'Manish Katira');
-    setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '7028028194', '+917028028194');
+    setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'For more details, contact Manish Katira');
+    setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '7028028194', '+917028028194', 'Tap to call');
 
     setHtml('#rec2003860951 [field="tn_text_1763405219328"]', 'Confirm Your Attendance');
     setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'To help us prepare for a joyful celebration, kindly confirm your attendance.');
@@ -1369,10 +1803,10 @@ document.addEventListener('DOMContentLoaded', function() {
     vpRenderDressCodeSection('gu');
 
     setHtml('#rec2003555721 [field="tn_text_1771277026942000001"]', 'વિગતો');
-    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', 'વધુ માહિતી અથવા પ્રશ્નો માટે, કૃપા કરીને કન્યાના પિતાનો સંપર્ક કરો.');
+    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', '');
     setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'આપની સ્નેહભરી ઉપસ્થિતિ અને આશીર્વાદ આ દિવસને વધુ યાદગાર બનાવશે.');
-    setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'મનીષ કટીરા');
-    setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '૭૦૨૮૦૨૮૧૯૪', '+917028028194');
+    setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'વધુ વિગતો માટે, મનીષ કટીરાનો સંપર્ક કરો');
+    setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '૭૦૨૮૦૨૮૧૯૪', '+917028028194', 'ટૅપ કરીને કૉલ કરો');
 
     setHtml('#rec2003860951 [field="tn_text_1763405219328"]', 'હાજરીની પુષ્ટિ કરો');
     setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'અમારી આનંદમય ઉજવણીની તૈયારીઓમાં મદદ કરવા માટે, કૃપા કરીને તમારી હાજરીની પુષ્ટિ કરો.');
