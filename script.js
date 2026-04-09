@@ -1463,6 +1463,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const OPENING_DISMISS_DELAY = 3200;
   const OPENING_HIDE_DELAY = 4100;
   const LANGUAGE_TOGGLE_HIDE_DELAY = 1000;
+  const OPENING_SKIP_SCROLL_THRESHOLD = 8;
   const HERO_SCROLL_CUE_DELAY = 5000;
   const HERO_STUCK_PEEK_DELAY = 6000;
   const HERO_SCROLL_THRESHOLD = 4;
@@ -1539,8 +1540,35 @@ document.addEventListener('DOMContentLoaded', function() {
     allRecords.style.marginRight = '';
   }
 
+  function hideOpeningStageImmediately() {
+    if (!openingRecord || openingRecord.dataset.vpDismissed === 'true') return false;
+
+    openingRecord.dataset.vpDismissed = 'true';
+    openingRecord.classList.add('vp-opening-stage--dismissing');
+    openingRecord.style.display = 'none';
+    restorePageLayoutAfterOpening();
+    unlockScroll();
+
+    if (languageToggle) {
+      languageToggle.classList.add('is-hiding');
+    }
+
+    return true;
+  }
+
   function getCurrentScrollY() {
     return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+
+  function skipOpeningStageForRestoredScroll() {
+    return getCurrentScrollY() > OPENING_SKIP_SCROLL_THRESHOLD && hideOpeningStageImmediately();
+  }
+
+  function scheduleOpeningStageRestoreCheck() {
+    window.requestAnimationFrame(skipOpeningStageForRestoredScroll);
+    window.setTimeout(skipOpeningStageForRestoredScroll, 0);
+    window.setTimeout(skipOpeningStageForRestoredScroll, 120);
+    window.setTimeout(skipOpeningStageForRestoredScroll, 360);
   }
 
   function clearHeroGuidanceTimers() {
@@ -1718,9 +1746,17 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('wheel', handleHeroScrollIntent, { passive: true });
   window.addEventListener('touchmove', handleHeroScrollIntent, { passive: true });
   window.addEventListener('keydown', handleHeroScrollIntent);
+  window.addEventListener('pageshow', scheduleOpeningStageRestoreCheck);
+  window.addEventListener('load', scheduleOpeningStageRestoreCheck);
 
   if (envelope && video) {
     lockScroll();
+    scheduleOpeningStageRestoreCheck();
+
+    if (skipOpeningStageForRestoredScroll()) {
+      return;
+    }
+
     let clicked = false;
     envelope.addEventListener('click', function(event) {
       if (!clicked) {
