@@ -498,8 +498,18 @@ document.addEventListener('DOMContentLoaded', function() {
   var popupContainer = document.querySelector('#rec2052858183 .t-popup__container');
   var popupDescription = document.querySelector('#rec2052858183 .t702__descr');
   var availabilityInputs = Array.prototype.slice.call(form.querySelectorAll('input.t-checkbox'));
+  var availabilityOptions = [
+    { key: 'yes', sheetValue: 'Yes, I will' },
+    { key: 'no', sheetValue: "Unfortunately, I can't" }
+  ];
 
-  availabilityInputs.forEach(function(input) {
+  availabilityInputs.forEach(function(input, index) {
+    var option = availabilityOptions[index];
+    if (option) {
+      input.setAttribute('data-rsvp-key', option.key);
+      input.setAttribute('data-sheet-value', option.sheetValue);
+    }
+
     input.addEventListener('change', function() {
       if (!input.checked) return;
       availabilityInputs.forEach(function(other) {
@@ -526,6 +536,17 @@ document.addEventListener('DOMContentLoaded', function() {
     popupContainer.classList.toggle('vp-rsvp-success-state', !!isSuccess);
   }
 
+  function getAvailabilityPayload(input) {
+    if (!input) {
+      return { key: '', label: '' };
+    }
+
+    return {
+      key: input.getAttribute('data-rsvp-key') || '',
+      label: input.getAttribute('data-sheet-value') || input.value || ''
+    };
+  }
+
   setDeadlineMessageVisible(true);
   setSuccessState(false);
 
@@ -535,7 +556,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var name = ((form.querySelector('input[name="Your name"]') || {}).value || '').trim();
     var selectedAvailability = form.querySelector('input.t-checkbox:checked');
-    var availability = selectedAvailability ? selectedAvailability.value : '';
+    var availabilityPayload = getAvailabilityPayload(selectedAvailability);
+    var availability = availabilityPayload.label;
     var successBox = form.querySelector('.js-successbox');
     var inputsBox = form.querySelector('.t-form__inputsbox');
 
@@ -564,7 +586,8 @@ document.addEventListener('DOMContentLoaded', function() {
       body: JSON.stringify({
         timestamp: new Date().toISOString(),
         name: name,
-        availability: availability
+        availability: availability,
+        availabilityKey: availabilityPayload.key
       })
     }).then(function(){
       if (successBox) {
