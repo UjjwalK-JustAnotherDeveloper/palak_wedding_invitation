@@ -238,11 +238,29 @@ function vpApplyDesktopArtboardLayout(record) {
 }
 
 function vpGetViewportHeight() {
+  var heightCandidates = [
+    window.innerHeight,
+    document.documentElement ? document.documentElement.clientHeight : 0
+  ];
+
   if (window.visualViewport && window.visualViewport.height) {
-    return Math.round(window.visualViewport.height);
+    heightCandidates.push(window.visualViewport.height);
   }
 
-  return window.innerHeight || document.documentElement.clientHeight || VP_OPENING_STAGE.artboardHeight;
+  return heightCandidates.reduce(function(maxHeight, candidate) {
+    var normalizedCandidate = Math.round(Number(candidate) || 0);
+    return normalizedCandidate > maxHeight ? normalizedCandidate : maxHeight;
+  }, 0) || VP_OPENING_STAGE.artboardHeight;
+}
+
+function vpSetRuntimeViewportHeight(viewportHeight) {
+  var normalizedHeight = Math.max(Math.round(Number(viewportHeight) || 0), 1);
+  var cssHeight = normalizedHeight + 'px';
+
+  document.documentElement.style.setProperty('--vp-runtime-viewport-height', cssHeight);
+  if (document.body) {
+    document.body.style.setProperty('--vp-runtime-viewport-height', cssHeight);
+  }
 }
 
 function vpUpdateOpeningStage() {
@@ -261,6 +279,7 @@ function vpUpdateOpeningStage() {
 
   if (!record || !parts || !parts.artboard) return;
 
+  vpSetRuntimeViewportHeight(viewportHeight);
   record.style.setProperty('--vp-opening-scale', scale.toFixed(4));
   record.style.setProperty('--vp-opening-stage-height', viewportHeight + 'px');
   record.style.setProperty('--vp-opening-cta-scale', ctaScale.toFixed(3));
@@ -294,8 +313,42 @@ t_onReady(function() {t_onFuncLoad('t396_init',function() {t396_init('2049114373
 
 t_onReady(function() {t_onFuncLoad('t396_init',function() {t396_init('2002273681');});});
 
-const eventLocal=new Date(2026,10,20,0,0,0);const interval=setInterval(()=>{const now=new Date();const distance=eventLocal - now;if(distance<0) {clearInterval(interval);document.getElementById("countdownContainer").innerHTML=document.body&&document.body.getAttribute('data-language')==='gu'?'સમય પૂર્ણ થયો':'EXPIRED';return;}
-document.getElementById("days").textContent=vpLocalizeActiveDigits(String(Math.floor(distance/(1000*60*60*24))).padStart(2,'0'));document.getElementById("hours").textContent=vpLocalizeActiveDigits(String(Math.floor((distance%(1000*60*60*24))/(1000*60*60))).padStart(2,'0'));document.getElementById("minutes").textContent=vpLocalizeActiveDigits(String(Math.floor((distance%(1000*60*60))/(1000*60))).padStart(2,'0'));document.getElementById("seconds").textContent=vpLocalizeActiveDigits(String(Math.floor((distance%(1000*60))/1000)).padStart(2,'0'));},1000);
+const eventLocal = new Date(2026, 10, 20, 0, 0, 0);
+
+function vpUpdateCountdown() {
+  var countdownContainer = document.getElementById('countdownContainer');
+  var days = document.getElementById('days');
+  var hours = document.getElementById('hours');
+  var minutes = document.getElementById('minutes');
+  var seconds = document.getElementById('seconds');
+
+  if (!countdownContainer || !days || !hours || !minutes || !seconds) return false;
+
+  var now = new Date();
+  var distance = eventLocal - now;
+
+  if (distance < 0) {
+    countdownContainer.innerHTML =
+      document.body && document.body.getAttribute('data-language') === 'gu'
+        ? 'સમય પૂર્ણ થયો'
+        : 'EXPIRED';
+    return true;
+  }
+
+  days.textContent = vpLocalizeActiveDigits(String(Math.floor(distance / (1000 * 60 * 60 * 24))).padStart(2, '0'));
+  hours.textContent = vpLocalizeActiveDigits(String(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0'));
+  minutes.textContent = vpLocalizeActiveDigits(String(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0'));
+  seconds.textContent = vpLocalizeActiveDigits(String(Math.floor((distance % (1000 * 60)) / 1000)).padStart(2, '0'));
+
+  return false;
+}
+
+vpUpdateCountdown();
+const interval = setInterval(function() {
+  if (vpUpdateCountdown()) {
+    clearInterval(interval);
+  }
+}, 1000);
 
 t_onReady(function() {t_onFuncLoad('t396_init',function() {t396_init('2002274581');});});
 
@@ -332,12 +385,84 @@ window.tildastatcookie='no';setTimeout(function(){(function(d,w,k,o,g) {var n=d.
 var vpBackgroundAudio = new Audio('assets/music/nastelbom-romantic-454545.mp3');
 vpBackgroundAudio.loop = true;
 vpBackgroundAudio.preload = 'auto';
+var vpBackgroundAudioHasStarted = false;
+var vpBackgroundAudioMediaSessionReady = false;
+
+function vpSyncBackgroundAudioMediaSessionState() {
+  if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+
+  try {
+    navigator.mediaSession.playbackState = vpBackgroundAudio.paused ? 'paused' : 'playing';
+  } catch (error) {}
+}
+
+function vpSetBackgroundAudioMediaActionHandler(action, handler) {
+  if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+  if (typeof navigator.mediaSession.setActionHandler !== 'function') return;
+
+  try {
+    navigator.mediaSession.setActionHandler(action, handler);
+  } catch (error) {}
+}
+
+function vpRegisterBackgroundAudioMediaSession() {
+  if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+
+  if ('MediaMetadata' in window) {
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Palak and Shubham',
+        artist: 'Wedding Invitation',
+        album: 'Palak and Shubham'
+      });
+    } catch (error) {}
+  }
+
+  if (!vpBackgroundAudioMediaSessionReady) {
+    vpSetBackgroundAudioMediaActionHandler('play', function() {
+      vpStartBackgroundAudio();
+    });
+    vpSetBackgroundAudioMediaActionHandler('pause', function() {
+      vpPauseBackgroundAudio();
+    });
+    vpSetBackgroundAudioMediaActionHandler('stop', function() {
+      vpPauseBackgroundAudio();
+      vpBackgroundAudio.currentTime = 0;
+      vpSyncBackgroundAudioMediaSessionState();
+    });
+    vpBackgroundAudioMediaSessionReady = true;
+  }
+
+  vpSyncBackgroundAudioMediaSessionState();
+}
+
+function vpStartBackgroundAudio(options) {
+  var shouldRestart = options && options.restart === true;
+
+  if (shouldRestart) {
+    vpBackgroundAudio.currentTime = 0;
+  }
+
+  vpBackgroundAudioHasStarted = true;
+  vpRegisterBackgroundAudioMediaSession();
+
+  return vpBackgroundAudio.play().catch(function(error) {
+    console.warn('Background audio could not start automatically.', error);
+  });
+}
 
 function vpPauseBackgroundAudio() {
   if (!vpBackgroundAudio.paused) {
     vpBackgroundAudio.pause();
   }
+
+  vpSyncBackgroundAudioMediaSessionState();
 }
+
+vpBackgroundAudio.addEventListener('play', vpSyncBackgroundAudioMediaSessionState);
+vpBackgroundAudio.addEventListener('pause', vpSyncBackgroundAudioMediaSessionState);
+vpBackgroundAudio.addEventListener('ended', vpSyncBackgroundAudioMediaSessionState);
+vpRegisterBackgroundAudioMediaSession();
 
 document.addEventListener('visibilitychange', function() {
   if (document.hidden) {
@@ -929,12 +1054,12 @@ function vpEnsureLocationStyles() {
     '.vp-location__mask--top{margin-top:-76px;}',
     '.vp-location__mask--bottom{display:none;}',
     '.vp-location__panel{position:relative; z-index:2; max-width:1040px; margin:0 auto; padding:22px 24px 0;}',
-    '.vp-location__eyebrow{margin:0 0 8px; text-align:center; font:600 clamp(10px, 0.82vw, 11px)/1.4 Arial, sans-serif; letter-spacing:0.18em; text-transform:uppercase; color:#9c7a5a;}',
-    '.vp-location__title{margin:0 0 34px; text-align:center; color:#3a3a3a; font-size:clamp(34px, 3.05vw, 44px); line-height:1.24; font-weight:500; font-family:\"newtemplate\", Arial, sans-serif; text-wrap:balance;}',
+    '.vp-location__eyebrow{margin:0 0 10px; text-align:center; font:400 clamp(24px, 2.3vw, 30px)/1 \"GoodVibrationsScript\", cursive; letter-spacing:0.01em; text-transform:none; color:#b8892f;}',
+    '.vp-location__title{margin:0 0 34px; text-align:center; color:#3a3a3a; font-size:clamp(34px, 3.05vw, 44px); line-height:1.18; font-weight:500; font-family:\"Arsenica\", Georgia, serif; text-wrap:balance;}',
     '.vp-location__callout{display:flex; align-items:flex-start; gap:16px; max-width:760px; margin:0 auto 26px; padding:16px 20px; border:1px solid rgba(216,183,154,0.8); border-radius:18px; background:linear-gradient(135deg, #f6ede5 0%, #fff7f0 100%); box-shadow:0 10px 24px rgba(105,56,31,0.06);}',
     '.vp-location__callout-icon{display:inline-flex; width:30px; height:30px; align-items:center; justify-content:center; border-radius:999px; background:#b8892f; color:#fffaf8; font:700 clamp(13px, 0.95vw, 14px)/1 Arial, sans-serif; box-shadow:0 8px 18px rgba(184,137,47,0.22);}',
     '.vp-location__callout-copy{flex:1; min-width:0; padding-top:2px;}',
-    '.vp-location__note{width:100%; margin:0; color:#5a2e24; font:400 clamp(14px, 1.05vw, 16px)/1.68 Arial, sans-serif; text-align:left; text-wrap:pretty;}',
+    '.vp-location__note{width:100%; margin:0; color:#5a2e24; font:400 clamp(14px, 1.05vw, 16px)/1.68 \"PTSerif\", Georgia, serif; text-align:left; text-wrap:pretty;}',
     '.vp-location__note-text{display:block;}',
     '.vp-location__cards{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:22px;}',
     '.vp-location__cards.vp-location__cards--four{grid-template-columns:repeat(2, minmax(0, 1fr)); max-width:860px; margin:0 auto;}',
@@ -949,20 +1074,20 @@ function vpEnsureLocationStyles() {
     '.vp-location__card[data-theme=\"shadi\"] .vp-location__media img{filter:grayscale(100%) brightness(1.04) contrast(0.96);}',
     '.vp-location__body{padding:22px 22px 24px; display:flex; flex-direction:column; flex:1; min-height:258px;}',
     '.vp-location__tags{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}',
-    '.vp-location__tag{display:inline-flex; align-self:flex-start; padding:5px 13px; border-radius:999px; background:var(--vp-location-accent, #66021f); color:#fff; font:700 clamp(9px, 0.68vw, 10px)/1.2 Arial, sans-serif; letter-spacing:0.12em; text-transform:uppercase;}',
+    '.vp-location__tag{display:inline-flex; align-self:flex-start; padding:5px 13px; border-radius:999px; background:var(--vp-location-accent, #66021f); color:#fff; font:700 clamp(9px, 0.68vw, 10px)/1.2 \"PTSerif\", Georgia, serif; letter-spacing:0.12em; text-transform:uppercase;}',
     '.vp-location__tag--stay{background:#617a58; color:#fffaf8;}',
-    '.vp-location__date{margin:0 0 8px; color:#9c7a5a; font:400 clamp(10px, 0.78vw, 11px)/1.5 Arial, sans-serif; letter-spacing:0.06em; text-transform:uppercase;}',
+    '.vp-location__date{margin:0 0 8px; color:#9c7a5a; font:400 clamp(10px, 0.78vw, 11px)/1.5 \"PTSerif\", Georgia, serif; letter-spacing:0.06em; text-transform:uppercase;}',
     '.vp-location__info{display:flex; flex:1; flex-direction:column;}',
     '.vp-location__details{display:grid; gap:8px; margin:0 0 14px;}',
     '.vp-location__detail{padding:9px 11px; border-radius:12px; background:#f6efe7; border:1px solid rgba(200,160,144,0.35);}',
-    '.vp-location__detail-label{display:block; margin:0 0 3px; color:#8a6d5f; font:700 clamp(9px, 0.7vw, 10px)/1.2 Arial, sans-serif; letter-spacing:0.08em; text-transform:uppercase;}',
-    '.vp-location__detail-value{display:block; color:#4b3c35; font:400 clamp(12px, 0.92vw, 13px)/1.5 Arial, sans-serif;}',
-    '.vp-location__venue{margin:0 0 12px; color:#2b1610; font:400 clamp(28px, 2.18vw, 33px)/1.1 Georgia, \"Times New Roman\", serif; font-style:italic; text-wrap:balance;}',
+    '.vp-location__detail-label{display:block; margin:0 0 3px; color:#8a6d5f; font:700 clamp(9px, 0.7vw, 10px)/1.2 \"PTSerif\", Georgia, serif; letter-spacing:0.08em; text-transform:uppercase;}',
+    '.vp-location__detail-value{display:block; color:#4b3c35; font:400 clamp(12px, 0.92vw, 13px)/1.5 \"PTSerif\", Georgia, serif;}',
+    '.vp-location__venue{margin:0 0 12px; color:#2b1610; font:500 clamp(28px, 2.18vw, 33px)/1.12 \"Arsenica\", Georgia, serif; text-wrap:balance;}',
     '.vp-location__divider{width:34px; height:1px; margin:0 0 12px; background:#e2d4c8;}',
-    '.vp-location__address{max-width:29ch; margin:0 0 12px; color:#7a6555; font:400 clamp(14px, 1.02vw, 15px)/1.72 Arial, sans-serif; text-wrap:pretty;}',
-    '.vp-location__cta{display:inline-flex; align-items:center; align-self:center; justify-content:center; min-height:42px; margin-top:auto; padding:0 20px; border-radius:999px; border:1px solid #c8a090; background:transparent; color:#66021f; font:700 clamp(11px, 0.82vw, 12px)/1.2 Arial, sans-serif; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; text-align:center; white-space:nowrap; transition:background-color .2s ease, color .2s ease, border-color .2s ease;}',
+    '.vp-location__address{max-width:29ch; margin:0 0 12px; color:#7a6555; font:400 clamp(14px, 1.02vw, 15px)/1.72 \"PTSerif\", Georgia, serif; text-wrap:pretty;}',
+    '.vp-location__cta{display:inline-flex; align-items:center; align-self:center; justify-content:center; min-height:42px; margin-top:auto; padding:0 20px; border-radius:999px; border:1px solid #c8a090; background:transparent; color:#66021f; font:700 clamp(11px, 0.82vw, 12px)/1.2 \"PTSerif\", Georgia, serif; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; text-align:center; white-space:nowrap; transition:background-color .2s ease, color .2s ease, border-color .2s ease;}',
     '.vp-location__cta:hover{background:#66021f; border-color:#66021f; color:#fffaf8;}',
-    '.vp-location__hint{font-family:Arial, sans-serif; text-align:center;}',
+    '.vp-location__hint{font-family:\"PTSerif\", Georgia, serif; text-align:center;}',
     '.vp-location__hint{display:none; margin:10px 0 0; color:#9c7a5a; font-size:clamp(10px, 0.78vw, 11px); letter-spacing:0.08em; text-transform:uppercase;}',
     '.vp-location--mobile{padding-bottom:84px;}',
     '.vp-location--mobile .vp-location__panel{padding-left:24px; padding-right:24px;}',
@@ -1447,6 +1572,15 @@ function vpEnsureHeroScrollCue() {
   return cue;
 }
 
+function vpNeutralizeOpeningSealScaleAnimation(envelope) {
+  if (!envelope) return;
+
+  envelope.setAttribute(
+    'data-animate-sbs-opts',
+    "[{'mx':0,'my':0,'sx':1,'sy':1,'op':1,'ro':0,'ti':0,'ea':'0','dt':0},{'mx':0,'my':0,'sx':1,'sy':1,'op':0,'ro':0,'ti':1500,'ea':'0','dt':1000}]"
+  );
+}
+
 // Prevent multiple clicks on envelope
 document.addEventListener('DOMContentLoaded', function() {
   const openingRecord = document.getElementById('rec2052880283');
@@ -1479,6 +1613,31 @@ document.addEventListener('DOMContentLoaded', function() {
   let autoPeekTarget = 0;
   let autoPeekHomeY = 0;
   let autoPeekInProgress = false;
+
+  if (video) {
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    video.setAttribute('disablepictureinpicture', '');
+    video.setAttribute('disableremoteplayback', '');
+
+    try {
+      video.disablePictureInPicture = true;
+    } catch (error) {}
+
+    try {
+      video.disableRemotePlayback = true;
+    } catch (error) {}
+
+    video.addEventListener('pause', function() {
+      if (vpBackgroundAudioHasStarted && !vpBackgroundAudio.paused && !document.hidden) {
+        vpPauseBackgroundAudio();
+      }
+    });
+  }
 
   function preventScroll(event) {
     event.preventDefault();
@@ -1749,6 +1908,8 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('pageshow', scheduleOpeningStageRestoreCheck);
   window.addEventListener('load', scheduleOpeningStageRestoreCheck);
 
+  vpNeutralizeOpeningSealScaleAnimation(envelope);
+
   if (envelope && video) {
     lockScroll();
     scheduleOpeningStageRestoreCheck();
@@ -1762,14 +1923,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!clicked) {
         clicked = true;
         hideLanguageToggle();
-        vpBackgroundAudio.currentTime = 0;
-        vpBackgroundAudio.play().catch(function(error) {
-          console.warn('Background audio could not start automatically.', error);
-        });
-
         video.play().catch(function(error) {
           console.warn('Hero video could not start automatically.', error);
         });
+        vpStartBackgroundAudio({ restart: true });
 
         setTimeout(dismissOpeningStage, OPENING_DISMISS_DELAY);
         setTimeout(function() {
@@ -1900,13 +2057,13 @@ document.addEventListener('DOMContentLoaded', function() {
   function setEnglish() {
     setHtml('[field="tn_text_1763402147625"]', 'Palak<br /><br />Shubham');
     setHtml('[field="tn_text_176340398328864790"]', 'Wedding Day');
-    setHtml('[field="tn_text_176340401720454780"]', '20.11.26');
+    setHtml('[field="tn_text_176340401720454780"]', '20 . 11 . 26');
     setHtml('[field="tn_text_176340390975774690"]', 'Weds');
     setHtml('[field="tn_text_1773926384566"]', 'Click to open');
     setHtml('[field="tn_text_1774451670001"]', 'With joyful hearts, we invite you to unfold our story.');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'Dear Friends and Family,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With love in their hearts and blessings from God, the Katira and Srivastava families warmly invite you to celebrate the wedding of their children, Palak and Shubham, to witness the start of their lifelong journey together.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With joyful hearts and countless blessings, we warmly invite you to celebrate the wedding of Palak and Shubham and witness the beginning of their beautiful forever together.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'The Celebration Begins In');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'Days');
@@ -1949,13 +2106,13 @@ document.addEventListener('DOMContentLoaded', function() {
   function setGujarati() {
     setHtml('[field="tn_text_1763402147625"]', 'પલક<br /><br />શુભમ');
     setHtml('[field="tn_text_176340398328864790"]', 'લગ્ન દિવસ');
-    setHtml('[field="tn_text_176340401720454780"]', '૨૦.૧૧.૨૬');
+    setHtml('[field="tn_text_176340401720454780"]', '૨૦ . ૧૧ . ૨૬');
     setHtml('[field="tn_text_176340390975774690"]', 'વેડ્સ');
     setHtml('[field="tn_text_1773926384566"]', 'ખોલવા માટે ક્લિક કરો');
     setHtml('[field="tn_text_1774451670001"]', 'આનંદભર્યા હૃદયોથી, અમે તમને અમારી વાર્તા ખુલ્લી જોવા આમંત્રિત કરીએ છીએ.');
 
     setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'પ્રિય મિત્રો અને પરિવાર,');
-    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'હૃદયમાં પ્રેમ અને ભગવાનના આશીર્વાદ સાથે, કટીરા અને શ્રીવાસ્તવ પરિવારો આપને તેમના સંતાનો પલક અને શુભમના લગ્નોત્સવમાં હાર્દિક આમંત્રણ આપે છે અને તેમની જીવનભરની સાથેની સફરની શરૂઆતના સાક્ષી બનવા આમંત્રિત કરે છે.');
+    setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'આનંદભર્યા હૃદયો અને અગણિત આશીર્વાદ સાથે, અમે આપને પલક અને શુભમના લગ્નોત્સવમાં હાર્દિક આમંત્રિત કરીએ છીએ અને તેમના સુંદર સદાયના સફરની શરૂઆતના સાક્ષી બનવા આમંત્રણ આપીએ છીએ.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'ઉજવણી શરૂ થવામાં બાકી છે');
     setText('#countdownContainer .time-block:nth-child(1) .label', 'દિવસ');
