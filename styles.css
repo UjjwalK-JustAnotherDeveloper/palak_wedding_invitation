@@ -2488,6 +2488,68 @@ body[data-language="gu"] #rec2049114373 .tn-elem[data-elem-id="17634040172045478
   }
 }
 
+@media screen and (max-width: 639px) {
+  #rec2049114373 .tn-elem[data-elem-id="1763402147625"] {
+    top: 266px !important;
+    left: 50% !important;
+    width: 392px !important;
+    transform: translateX(-50%) !important;
+  }
+
+  #rec2049114373 .tn-elem[data-elem-id="1763402147625"] .tn-atom {
+    font-size: 70px !important;
+    line-height: 0.72 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  #rec2049114373 .tn-elem[data-elem-id="176340398328864790"] .tn-atom {
+    font-size: 48px !important;
+    line-height: 0.98 !important;
+    letter-spacing: 0 !important;
+  }
+
+  #rec2049114373 .tn-elem[data-elem-id="176340401720454780"] .tn-atom {
+    font-size: 32px !important;
+    letter-spacing: 0.06em !important;
+    word-spacing: 0.16em !important;
+  }
+
+  body[data-language="gu"] #rec2049114373 .tn-elem[data-elem-id="1763402147625"] .tn-atom {
+    font-size: 58px !important;
+    line-height: 0.88 !important;
+    letter-spacing: 0 !important;
+  }
+}
+
+@media screen and (max-width: 479px) {
+  #rec2049114373 .tn-elem[data-elem-id="1763402147625"] {
+    top: 270px !important;
+    width: 308px !important;
+  }
+
+  #rec2049114373 .tn-elem[data-elem-id="1763402147625"] .tn-atom {
+    font-size: 58px !important;
+    line-height: 0.76 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  #rec2049114373 .tn-elem[data-elem-id="176340398328864790"] .tn-atom {
+    font-size: 40px !important;
+  }
+
+  #rec2049114373 .tn-elem[data-elem-id="176340401720454780"] .tn-atom {
+    font-size: 27px !important;
+    letter-spacing: 0.05em !important;
+    word-spacing: 0.12em !important;
+  }
+
+  body[data-language="gu"] #rec2049114373 .tn-elem[data-elem-id="1763402147625"] .tn-atom {
+    font-size: 48px !important;
+    line-height: 0.92 !important;
+    letter-spacing: 0 !important;
+  }
+}
+
 body[data-language="gu"] #rec2052880283 .tn-elem[data-elem-id="1773926384566"] .tn-atom,
 body[data-language="gu"] #rec2052880283 .tn-elem[data-elem-id="1774451670001"] .tn-atom,
 body[data-language="gu"] #rec2049114373 .tn-elem[data-elem-id="1763402147625"] .tn-atom,

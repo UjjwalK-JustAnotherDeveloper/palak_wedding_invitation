@@ -1594,7 +1594,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const video = document.querySelector('video');
   const languageToggle = document.getElementById('language-toggle');
   const heroScrollCue = vpEnsureHeroScrollCue();
-  const OPENING_SEAL_FALLBACK_SRC = 'assets/images/Pi7_cropper.png';
+  const OPENING_SEAL_FALLBACK_SRC = 'assets/images/Pi7_cropper-fallback.png';
   const SCROLL_UNLOCK_DELAY = 4500;
   const OPENING_DISMISS_DELAY = 3200;
   const OPENING_HIDE_DELAY = 4100;
@@ -1626,6 +1626,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (envelopeImage) {
+    envelopeImage.classList.remove('t-img');
+    envelopeImage.removeAttribute('data-original');
+    envelopeImage.setAttribute('loading', 'eager');
+    envelopeImage.setAttribute('fetchpriority', 'high');
     envelopeImage.addEventListener('error', applyEnvelopeImageFallback);
   }
 
