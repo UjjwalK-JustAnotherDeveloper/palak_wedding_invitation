@@ -1588,13 +1588,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const heroRecord = document.getElementById('rec2049114373');
   const nextRecord = document.getElementById('rec2002273681');
   const envelope = document.querySelector('[data-elem-id="1773847037346"]');
-  const envelopeImage = envelope ? envelope.querySelector('.tn-atom__img') : null;
   const envelopeLabel = document.querySelector('#rec2052880283 [data-elem-id="1773926384566"]');
   const envelopeSubtitle = document.querySelector('#rec2052880283 [data-elem-id="1774451670001"]');
   const video = document.querySelector('video');
   const languageToggle = document.getElementById('language-toggle');
   const heroScrollCue = vpEnsureHeroScrollCue();
-  const OPENING_SEAL_FALLBACK_SRC = 'assets/images/Pi7_cropper-fallback.png';
   const SCROLL_UNLOCK_DELAY = 4500;
   const OPENING_DISMISS_DELAY = 3200;
   const OPENING_HIDE_DELAY = 4100;
@@ -1615,24 +1613,6 @@ document.addEventListener('DOMContentLoaded', function() {
   let autoPeekTarget = 0;
   let autoPeekHomeY = 0;
   let autoPeekInProgress = false;
-
-  function applyEnvelopeImageFallback() {
-    if (!envelopeImage || envelopeImage.dataset.vpFallbackApplied === 'true') return;
-
-    envelopeImage.dataset.vpFallbackApplied = 'true';
-    envelopeImage.src = OPENING_SEAL_FALLBACK_SRC;
-    envelopeImage.setAttribute('src', OPENING_SEAL_FALLBACK_SRC);
-    envelopeImage.setAttribute('data-original', OPENING_SEAL_FALLBACK_SRC);
-  }
-
-  if (envelopeImage) {
-    envelopeImage.addEventListener('error', applyEnvelopeImageFallback);
-
-    // iPhone browsers share WebKit, so a single decode issue affects Safari, Chrome, and Edge together.
-    if (window.isiOS) {
-      applyEnvelopeImageFallback();
-    }
-  }
 
   if (video) {
     video.muted = true;
