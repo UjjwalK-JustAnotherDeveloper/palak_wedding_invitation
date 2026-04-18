@@ -675,7 +675,9 @@ function vpCreateEventTimelineMarkup() {
     '      <path id="vpTimelinePath" d="M0.982 0.982C0.982 16.704 6.951 28.707 16.205 40.759C23.71 50.533 37.43 74.926 45.67 84.464C54.846 95.087 56.964 101.727 56.964 115.893C56.964 124.63 53.603 129.897 45.67 133.571C37.883 137.177 28.23 135.004 24.063 127.188C16.933 113.817 21.783 104.392 30.938 93.795C42.05 80.931 53.124 80.045 68.75 80.045C81.108 80.045 99.246 84.636 108.036 93.795C116.875 100.179 122.255 104.779 129.152 111.964C136.161 119.267 133.067 117.774 139.464 125.223C146.181 133.044 156.221 158.172 159.107 167.946C161.994 177.72 161.529 181.249 164.509 188.08C167.489 194.912 168.929 220.948 168.929 228.348C168.929 240.295 164.602 249.531 159.107 259.777C148.924 278.762 122.068 290.648 103.71 299.151C84.242 308.165 65.053 322.236 61.384 343.259C57.146 367.545 79.299 383.794 103.185 392.091C128.896 401.019 157.847 403.071 184.835 405.321C237.96 409.75 291.65 416.24 343.725 429.049C378.464 437.594 431.124 462.717 439.018 503.839" fill="none" stroke="#9bb7a1" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"></path>',
     '      <g data-role="dots"></g>',
     '      <g id="vpTimelinePlaneGroup" class="vp-event-timeline__plane-group">',
-    '        <image class="vp-event-timeline__plane" href="assets/images/timeline-plane.webp" x="-22" y="-22" width="44" height="44" preserveAspectRatio="xMidYMid meet"></image>',
+    '        <g class="vp-event-timeline__marker">',
+    '          <image class="vp-event-timeline__plane" href="assets/images/timeline-heart.webp" x="-20" y="-20" width="40" height="40" preserveAspectRatio="xMidYMid meet"></image>',
+    '        </g>',
     '      </g>',
     '    </svg>',
     '    <div data-role="items"></div>',
@@ -753,6 +755,8 @@ function vpInitEventTimelineAnimation(timeline) {
   var totalLength = path.getTotalLength();
   var rafId = 0;
   var isAnimating = false;
+  var isScrollActive = false;
+  var scrollIdleTimer = 0;
   var timelineTop = 0;
   var timelineHeight = 0;
   var currentProgress = 0;
@@ -760,32 +764,6 @@ function vpInitEventTimelineAnimation(timeline) {
   var sampleCount = Math.max(120, Math.round(totalLength / 3));
   var pathSamples = [];
   var smoothFactor = window.matchMedia('(pointer: coarse)').matches ? 0.22 : 0.3;
-  var planeConfig = {
-    width: 44,
-    height: 44,
-    trackBodyX: 23,
-    trackBodyY: 23,
-    trackTipX: 35,
-    trackTipY: 11
-  };
-  var planeCenter = {
-    x: planeConfig.width / 2,
-    y: planeConfig.height / 2
-  };
-  var planeBodyOffset = {
-    x: planeConfig.trackBodyX - planeCenter.x,
-    y: planeConfig.trackBodyY - planeCenter.y
-  };
-  var planeTipOffset = {
-    x: planeConfig.trackTipX - planeCenter.x,
-    y: planeConfig.trackTipY - planeCenter.y
-  };
-  var planeGuideVector = {
-    x: planeTipOffset.x - planeBodyOffset.x,
-    y: planeTipOffset.y - planeBodyOffset.y
-  };
-  var planeGuideAngle = Math.atan2(planeGuideVector.y, planeGuideVector.x);
-  var planeGuideLength = Math.sqrt((planeGuideVector.x * planeGuideVector.x) + (planeGuideVector.y * planeGuideVector.y));
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -809,19 +787,12 @@ function vpInitEventTimelineAnimation(timeline) {
 
   function buildPlaneSample(progress) {
     var length = totalLength * progress;
-    var bodyPoint = path.getPointAtLength(length);
-    var tipPoint = path.getPointAtLength(Math.min(totalLength, length + planeGuideLength));
-    var worldGuideAngle = Math.atan2(tipPoint.y - bodyPoint.y, tipPoint.x - bodyPoint.x);
-    var rotationInRadians = worldGuideAngle - planeGuideAngle;
-    var rotation = rotationInRadians * 180 / Math.PI;
-    var offsetX = planeBodyOffset.x * Math.cos(rotationInRadians) - planeBodyOffset.y * Math.sin(rotationInRadians);
-    var offsetY = planeBodyOffset.x * Math.sin(rotationInRadians) + planeBodyOffset.y * Math.cos(rotationInRadians);
+    var point = path.getPointAtLength(length);
 
     return {
       progress: progress,
-      x: bodyPoint.x - offsetX,
-      y: bodyPoint.y - offsetY,
-      rotation: rotation
+      x: point.x,
+      y: point.y
     };
   }
 
@@ -831,11 +802,6 @@ function vpInitEventTimelineAnimation(timeline) {
     for (var index = 0; index <= sampleCount; index += 1) {
       pathSamples.push(buildPlaneSample(index / sampleCount));
     }
-  }
-
-  function interpolateAngle(start, end, progress) {
-    var delta = ((end - start + 540) % 360) - 180;
-    return start + (delta * progress);
   }
 
   function positionPlane(progress) {
@@ -848,15 +814,36 @@ function vpInitEventTimelineAnimation(timeline) {
     var to = pathSamples[nextIndex] || from;
     var centerX = from.x + ((to.x - from.x) * localProgress);
     var centerY = from.y + ((to.y - from.y) * localProgress);
-    var rotation = interpolateAngle(from.rotation, to.rotation, localProgress);
 
-    planeGroup.setAttribute('transform', 'translate(' + centerX.toFixed(2) + ' ' + centerY.toFixed(2) + ') rotate(' + rotation.toFixed(2) + ')');
+    planeGroup.setAttribute('transform', 'translate(' + centerX.toFixed(2) + ' ' + centerY.toFixed(2) + ')');
   }
 
   function measureTimeline() {
     var rect = timeline.getBoundingClientRect();
     timelineTop = rect.top + getPageScrollY();
     timelineHeight = rect.height || timeline.offsetHeight || 1;
+  }
+
+  function setIdleState(isIdle) {
+    timeline.classList.toggle('vp-event-timeline--idle', !!isIdle);
+  }
+
+  function clearScrollIdleTimer() {
+    if (!scrollIdleTimer) return;
+    window.clearTimeout(scrollIdleTimer);
+    scrollIdleTimer = 0;
+  }
+
+  function scheduleIdleState() {
+    clearScrollIdleTimer();
+    scrollIdleTimer = window.setTimeout(function() {
+      isScrollActive = false;
+      scrollIdleTimer = 0;
+
+      if (!isAnimating) {
+        setIdleState(true);
+      }
+    }, 180);
   }
 
   function updateTargetProgress() {
@@ -873,6 +860,9 @@ function vpInitEventTimelineAnimation(timeline) {
       positionPlane(currentProgress);
       isAnimating = false;
       rafId = 0;
+      if (!isScrollActive) {
+        setIdleState(true);
+      }
       return;
     }
 
@@ -884,10 +874,29 @@ function vpInitEventTimelineAnimation(timeline) {
   function requestTick() {
     updateTargetProgress();
 
+    if (Math.abs(targetProgress - currentProgress) < 0.0012) {
+      currentProgress = targetProgress;
+      positionPlane(currentProgress);
+      isAnimating = false;
+      if (!isScrollActive) {
+        setIdleState(true);
+      }
+      return;
+    }
+
+    setIdleState(false);
+
     if (isAnimating) return;
 
     isAnimating = true;
     rafId = window.requestAnimationFrame(renderTimeline);
+  }
+
+  function handleScroll() {
+    isScrollActive = true;
+    setIdleState(false);
+    scheduleIdleState();
+    requestTick();
   }
 
   function refreshTimeline() {
@@ -896,6 +905,9 @@ function vpInitEventTimelineAnimation(timeline) {
     if (!isAnimating) {
       currentProgress = targetProgress;
       positionPlane(currentProgress);
+      if (!isScrollActive) {
+        setIdleState(true);
+      }
     } else {
       requestTick();
     }
@@ -904,9 +916,11 @@ function vpInitEventTimelineAnimation(timeline) {
   rebuildPathSamples();
   measureTimeline();
   timeline.vpTimelineRefresh = refreshTimeline;
+  setIdleState(false);
   positionPlane(0);
   requestTick();
-  window.addEventListener('scroll', requestTick, { passive: true });
+  scheduleIdleState();
+  window.addEventListener('scroll', handleScroll, { passive: true });
   window.addEventListener('resize', refreshTimeline);
   window.addEventListener('orientationchange', refreshTimeline);
   if (window.visualViewport) {
@@ -915,7 +929,8 @@ function vpInitEventTimelineAnimation(timeline) {
 
   window.addEventListener('beforeunload', function() {
     if (rafId) window.cancelAnimationFrame(rafId);
-    window.removeEventListener('scroll', requestTick);
+    clearScrollIdleTimer();
+    window.removeEventListener('scroll', handleScroll);
     window.removeEventListener('resize', refreshTimeline);
     window.removeEventListener('orientationchange', refreshTimeline);
     if (window.visualViewport) {

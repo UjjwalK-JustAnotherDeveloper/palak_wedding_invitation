@@ -1301,10 +1301,48 @@ body[data-language="gu"] #vp-hero-scroll-cue .vp-hero-scroll-cue__label{
   backface-visibility: hidden;
 }
 
+#rec2002506421 .vp-event-timeline__marker {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
 #rec2002506421 .vp-event-timeline__plane {
   overflow: visible;
-  transform: translateZ(0);
+  display: block;
+  transform-box: fill-box;
+  transform-origin: center;
   backface-visibility: hidden;
+}
+
+#rec2002506421 .vp-event-timeline--idle .vp-event-timeline__marker {
+  animation: vpEventTimelineHeartPulse 1.7s ease-in-out infinite;
+}
+
+@keyframes vpEventTimelineHeartPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  28% {
+    transform: scale(1.1);
+  }
+
+  42% {
+    transform: scale(0.96);
+  }
+
+  60% {
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #rec2002506421 .vp-event-timeline--idle .vp-event-timeline__marker {
+    animation: none;
+  }
 }
 
 @media screen and (max-width: 1199px) {
