@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="format-detection" content="telephone=no">
+  <title>Save the Date | Palak and Shubham</title>
+  <link rel="shortcut icon" href="../assets/images/favicon.ico" type="image/x-icon">
+  <style>
+    @font-face {
+      font-family: "Arsenica";
+      src: url("../assets/fonts/ArsenicaTrial-Regular.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Arsenica";
+      src: url("../assets/fonts/ArsenicaTrial-Medium.ttf") format("truetype");
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "PTSerif";
+      src: url("../assets/fonts/PTSerif-Regular.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "PTSerif";
+      src: url("../assets/fonts/PTSerif-Bold.ttf") format("truetype");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "PTSerif";
+      src: url("../assets/fonts/PTSerif-Italic.ttf") format("truetype");
+      font-weight: 400;
+      font-style: italic;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "GoodVibrationsScript";
+      src: url("../assets/fonts/GoodVibrations-Script.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: light;
+      --ruby: #66021f;
+      --ruby-deep: #3d0112;
+      --ruby-glow: #8a1231;
+      --ivory: #fffaf8;
+      --cream: #f7eadf;
+      --blush: #f2c8cc;
+      --rose: #d88791;
+      --ink: #31000d;
+      --gold: #cba15a;
+      --shadow: rgba(36, 0, 10, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: var(--ruby);
+    }
+
+    body {
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 50% 14%, rgba(255, 250, 248, 0.2), rgba(255, 250, 248, 0) 36%),
+        linear-gradient(90deg, #4f0518 0%, var(--ruby) 12%, var(--ruby) 88%, #4f0518 100%);
+      color: var(--ivory);
+      font-family: "PTSerif", Georgia, serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .std-page {
+      position: relative;
+      display: grid;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--ruby);
+      isolation: isolate;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: clamp(24px, 4vw, 46px) clamp(18px, 5vw, 72px) clamp(22px, 3.5vw, 40px);
+    }
+
+    .std-photo {
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 32%;
+      opacity: 0.2;
+      filter: sepia(0.18) saturate(0.78) contrast(0.96);
+      transform: scale(1.04);
+    }
+
+    .std-page::before,
+    .std-page::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .std-page::before {
+      z-index: -2;
+      background:
+        linear-gradient(180deg, rgba(61, 1, 18, 0.72) 0%, rgba(102, 2, 31, 0.42) 42%, rgba(61, 1, 18, 0.84) 100%),
+        radial-gradient(circle at 50% 58%, rgba(255, 250, 248, 0.18), rgba(255, 250, 248, 0) 46%);
+    }
+
+    .std-page::after {
+      z-index: -1;
+      box-shadow: inset 0 0 92px rgba(28, 0, 8, 0.44);
+    }
+
+    .std-shell {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 1080px;
+      min-height: calc(100vh - clamp(48px, 8vw, 92px));
+      min-height: calc(100dvh - clamp(48px, 8vw, 92px));
+      margin: 0 auto;
+    }
+
+    .std-home {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: clamp(62px, 9vw, 92px);
+      padding: 0 clamp(24px, 4vw, 42px);
+      border: 1px solid rgba(255, 250, 248, 0.28);
+      border-radius: 999px;
+      color: rgba(255, 250, 248, 0.9);
+      font-family: "GoodVibrationsScript", cursive;
+      font-size: clamp(44px, 8vw, 80px);
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: 0;
+      text-decoration: none;
+      text-transform: none;
+      text-shadow: 0 12px 28px var(--shadow);
+      transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+    }
+
+    .std-home--badge {
+      pointer-events: none;
+    }
+
+    .std-content {
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: clamp(16px, 2.4vw, 32px);
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: clamp(18px, 4vw, 44px) 0 clamp(18px, 3vw, 34px);
+      text-align: center;
+      transform: translateY(clamp(-48px, -5vh, -26px));
+    }
+
+    .std-names {
+      display: grid;
+      justify-items: center;
+      gap: clamp(4px, 0.95vw, 12px);
+      margin: 0;
+      color: var(--ivory);
+      font-family: "Arsenica", Georgia, serif;
+      font-size: clamp(50px, 8vw, 94px);
+      font-weight: 500;
+      line-height: 0.9;
+      letter-spacing: 0;
+      text-shadow: 0 16px 34px rgba(36, 0, 10, 0.36);
+      text-wrap: balance;
+    }
+
+    .std-name-line {
+      display: block;
+    }
+
+    .std-typewriter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 8ch;
+      min-height: clamp(28px, 3.8vw, 46px);
+      color: #d9b764;
+      font-family: "PTSerif", Georgia, serif;
+      font-size: clamp(26px, 3.2vw, 40px);
+      font-style: italic;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: 0;
+      text-shadow: 0 10px 22px rgba(36, 0, 10, 0.3);
+    }
+
+    .std-typewriter-text {
+      display: inline-block;
+      text-align: center;
+    }
+
+    .std-typewriter-cursor {
+      display: inline-block;
+      margin-left: 3px;
+      color: rgba(217, 183, 100, 0.9);
+      font-family: "PTSerif", Georgia, serif;
+      font-size: 0.82em;
+      line-height: 1;
+      transform: translateY(0.08em);
+      animation: stdCursorBlink 1000ms steps(1) infinite;
+    }
+
+    @keyframes stdCursorBlink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .std-date-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(14px, 2.2vw, 28px);
+      width: min(100%, 640px);
+      margin-top: clamp(2px, 0.55vw, 8px);
+    }
+
+    .std-date-wrap::before,
+    .std-date-wrap::after {
+      content: "";
+      display: block;
+      width: clamp(42px, 9vw, 112px);
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 250, 248, 0), rgba(255, 250, 248, 0.54));
+      box-shadow: 0 1px 10px rgba(255, 250, 248, 0.08);
+    }
+
+    .std-date-wrap::after {
+      background: linear-gradient(90deg, rgba(255, 250, 248, 0.54), rgba(255, 250, 248, 0));
+    }
+
+    .std-date {
+      margin: 0;
+      color: var(--ivory);
+      font-family: "PTSerif", Georgia, serif;
+      font-size: clamp(58px, 8vw, 98px);
+      font-weight: 700;
+      line-height: 0.98;
+      letter-spacing: 0.03em;
+      font-variant-numeric: lining-nums tabular-nums;
+      text-shadow: 0 16px 34px rgba(36, 0, 10, 0.34);
+    }
+
+    .std-countdown {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: clamp(5px, 1vw, 10px);
+      width: min(100%, 480px);
+      margin-top: clamp(0px, 0.45vw, 6px);
+      opacity: 0.78;
+    }
+
+    .std-time-block {
+      display: grid;
+      justify-items: center;
+      min-width: 0;
+      width: clamp(54px, 7vw, 74px);
+    }
+
+    .std-number {
+      color: var(--ivory);
+      font-family: "PTSerif", Georgia, serif;
+      font-size: clamp(20px, 2.25vw, 27px);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+
+    .std-label {
+      margin-top: 5px;
+      color: rgba(255, 250, 248, 0.58);
+      font-family: "PTSerif", Georgia, serif;
+      font-size: clamp(10px, 1.2vw, 12px);
+      font-weight: 400;
+      line-height: 1.2;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .std-separator {
+      display: inline-block;
+      margin-top: -2px;
+      color: rgba(255, 250, 248, 0.36);
+      font-family: "PTSerif", Georgia, serif;
+      font-size: clamp(20px, 2.25vw, 27px);
+      line-height: 1;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+
+    @media (max-width: 720px) {
+      .std-page {
+        padding: 18px 16px 18px;
+      }
+
+      .std-home {
+        min-height: 62px;
+        padding: 0 26px;
+      }
+
+      .std-shell {
+        min-height: calc(100vh - 36px);
+        min-height: calc(100dvh - 36px);
+        max-width: 360px;
+      }
+
+      .std-content {
+        gap: 18px;
+        max-width: 340px;
+        padding-top: 18px;
+        padding-bottom: 12px;
+        transform: translateY(-36px);
+      }
+
+      .std-names {
+        gap: 6px;
+      }
+
+      .std-typewriter {
+        min-height: 32px;
+        font-size: clamp(24px, 7vw, 30px);
+      }
+
+      .std-date-wrap {
+        gap: 10px;
+        max-width: 330px;
+        margin-top: 3px;
+      }
+
+      .std-date-wrap::before,
+      .std-date-wrap::after {
+        width: clamp(18px, 6vw, 26px);
+      }
+
+      .std-date {
+        font-size: clamp(48px, 13vw, 56px);
+        letter-spacing: 0.025em;
+      }
+
+      .std-countdown {
+        gap: 3px;
+        max-width: 318px;
+        margin-top: 2px;
+      }
+
+      .std-number {
+        font-size: 18px;
+      }
+
+      .std-label {
+        margin-top: 4px;
+        font-size: 9px;
+        letter-spacing: 0.06em;
+      }
+
+      .std-time-block {
+        width: 56px;
+      }
+
+      .std-separator {
+        font-size: 18px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .std-names {
+        font-size: 48px;
+      }
+
+      .std-countdown {
+        gap: 8px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .std-typewriter-cursor {
+        animation: none;
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="std-page">
+    <img class="std-photo" src="../assets/images/image.png" alt="Palak and Shubham together" loading="eager" decoding="async">
+    <div class="std-shell">
+      <section class="std-content" aria-labelledby="save-the-date-title">
+        <span class="std-home std-home--badge">Save the Date</span>
+        <h1 class="std-names" id="save-the-date-title" aria-label="Palak marries Shubham">
+          <span class="std-name-line" aria-hidden="true">Palak</span>
+          <span class="std-typewriter" aria-hidden="true">
+            <span class="std-typewriter-text" id="std-typewriter-text">marries</span>
+            <span class="std-typewriter-cursor">_</span>
+          </span>
+          <span class="std-name-line" aria-hidden="true">Shubham</span>
+        </h1>
+        <div class="std-date-wrap" aria-label="Wedding date">
+          <p class="std-date">20.11.26</p>
+        </div>
+
+        <div class="std-countdown" aria-label="Countdown to the wedding">
+          <div class="std-time-block">
+            <div class="std-number" id="std-days">00</div>
+            <div class="std-label">Days</div>
+          </div>
+          <span class="std-separator" aria-hidden="true">:</span>
+          <div class="std-time-block">
+            <div class="std-number" id="std-hours">00</div>
+            <div class="std-label">Hours</div>
+          </div>
+          <span class="std-separator" aria-hidden="true">:</span>
+          <div class="std-time-block">
+            <div class="std-number" id="std-minutes">00</div>
+            <div class="std-label">Minutes</div>
+          </div>
+          <span class="std-separator" aria-hidden="true">:</span>
+          <div class="std-time-block">
+            <div class="std-number" id="std-seconds">00</div>
+            <div class="std-label">Seconds</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function() {
+      var target = new Date("2026-11-20T00:00:00+05:30").getTime();
+      var elements = {
+        days: document.getElementById("std-days"),
+        hours: document.getElementById("std-hours"),
+        minutes: document.getElementById("std-minutes"),
+        seconds: document.getElementById("std-seconds")
+      };
+
+      function pad(value) {
+        return String(value).padStart(2, "0");
+      }
+
+      function updateCountdown() {
+        var now = Date.now();
+        var distance = target - now;
+
+        if (distance <= 0) {
+          elements.days.textContent = "00";
+          elements.hours.textContent = "00";
+          elements.minutes.textContent = "00";
+          elements.seconds.textContent = "00";
+          return true;
+        }
+
+        elements.days.textContent = pad(Math.floor(distance / 86400000));
+        elements.hours.textContent = pad(Math.floor((distance % 86400000) / 3600000));
+        elements.minutes.textContent = pad(Math.floor((distance % 3600000) / 60000));
+        elements.seconds.textContent = pad(Math.floor((distance % 60000) / 1000));
+        return false;
+      }
+
+      if (updateCountdown()) return;
+
+      var timer = window.setInterval(function() {
+        if (updateCountdown()) {
+          window.clearInterval(timer);
+        }
+      }, 1000);
+    })();
+
+    (function() {
+      var typewriter = document.getElementById("std-typewriter-text");
+      if (!typewriter) return;
+
+      var words = ["gets", "takes", "wins", "marries", "joins"];
+      var wordIndex = 0;
+      var charIndex = words[0].length;
+      var deleting = false;
+      var speed = 120;
+      var deleteSpeed = 70;
+      var waitTime = 2000;
+      var initialDelay = 650;
+
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        typewriter.textContent = "marries";
+        return;
+      }
+
+      typewriter.textContent = words[0];
+
+      function tick() {
+        var currentWord = words[wordIndex];
+
+        if (deleting) {
+          if (charIndex <= 1) {
+            wordIndex = (wordIndex + 1) % words.length;
+            currentWord = words[wordIndex];
+            typewriter.textContent = currentWord.charAt(0);
+            charIndex = 1;
+            deleting = false;
+            window.setTimeout(tick, speed);
+            return;
+          }
+
+          typewriter.textContent = currentWord.slice(0, Math.max(charIndex - 1, 0));
+          charIndex -= 1;
+
+          window.setTimeout(tick, deleteSpeed);
+          return;
+        }
+
+        typewriter.textContent = currentWord.slice(0, charIndex + 1);
+        charIndex += 1;
+
+        if (charIndex >= currentWord.length) {
+          deleting = true;
+          window.setTimeout(tick, waitTime);
+          return;
+        }
+
+        window.setTimeout(tick, speed);
+      }
+
+      window.setTimeout(tick, initialDelay);
+    })();
+  </script>
+</body>
+</html>
