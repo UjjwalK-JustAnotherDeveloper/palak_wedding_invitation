@@ -657,11 +657,29 @@
         syncMediaSessionState();
       }
 
+      var passiveStartOptions = { capture: true, passive: true };
+      var activeStartOptions = { capture: true };
+      var startEvents = [
+        { type: "pointerdown", options: passiveStartOptions },
+        { type: "pointerup", options: passiveStartOptions },
+        { type: "mousedown", options: passiveStartOptions },
+        { type: "mouseup", options: passiveStartOptions },
+        { type: "touchstart", options: passiveStartOptions },
+        { type: "touchend", options: passiveStartOptions },
+        { type: "click", options: passiveStartOptions },
+        { type: "keydown", options: activeStartOptions }
+      ];
+
+      function addStartListeners() {
+        startEvents.forEach(function(eventConfig) {
+          window.addEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
+        });
+      }
+
       function removeStartListeners() {
-        document.removeEventListener("pointerdown", handleFirstInteraction);
-        document.removeEventListener("touchstart", handleFirstInteraction);
-        document.removeEventListener("click", handleFirstInteraction);
-        document.removeEventListener("keydown", handleFirstInteraction);
+        startEvents.forEach(function(eventConfig) {
+          window.removeEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
+        });
       }
 
       function handleFirstInteraction() {
@@ -687,10 +705,7 @@
       window.addEventListener("blur", pauseBackgroundAudio);
       window.addEventListener("pagehide", pauseBackgroundAudio);
 
-      document.addEventListener("pointerdown", handleFirstInteraction, { once: true, passive: true });
-      document.addEventListener("touchstart", handleFirstInteraction, { once: true, passive: true });
-      document.addEventListener("click", handleFirstInteraction, { once: true });
-      document.addEventListener("keydown", handleFirstInteraction, { once: true });
+      addStartListeners();
 
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", attemptPageLoadAutoplay, { once: true });
