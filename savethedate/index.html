@@ -506,7 +506,7 @@
       var typewriter = document.getElementById("std-typewriter-text");
       if (!typewriter) return;
 
-      var words = ["gets", "takes", "wins", "marries", "joins"];
+      var words = ["gets", "takes", "marries"];
       var wordIndex = 0;
       var charIndex = words[0].length;
       var deleting = false;
@@ -556,6 +556,163 @@
       }
 
       window.setTimeout(tick, initialDelay);
+    })();
+
+    (function() {
+      var MUSIC_START_TIME = 51;
+      var MUSIC_VOLUME = 0.18;
+      var backgroundAudio = new Audio("../assets/music/a-thousand-years-instrumental.m4a");
+      var backgroundAudioHasStarted = false;
+      var mediaSessionReady = false;
+
+      backgroundAudio.loop = true;
+      backgroundAudio.preload = "auto";
+      backgroundAudio.volume = MUSIC_VOLUME;
+
+      function seekToMusicStart() {
+        try {
+          if (Number.isFinite(backgroundAudio.duration) && backgroundAudio.duration <= MUSIC_START_TIME) {
+            backgroundAudio.currentTime = 0;
+            return;
+          }
+
+          backgroundAudio.currentTime = MUSIC_START_TIME;
+        } catch (error) {}
+      }
+
+      function queueMusicStartSeek() {
+        if (backgroundAudio.readyState > 0) {
+          seekToMusicStart();
+          return;
+        }
+
+        backgroundAudio.addEventListener("loadedmetadata", seekToMusicStart, { once: true });
+      }
+
+      function syncMediaSessionState() {
+        if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+
+        try {
+          navigator.mediaSession.playbackState = backgroundAudio.paused ? "paused" : "playing";
+        } catch (error) {}
+      }
+
+      function setMediaActionHandler(action, handler) {
+        if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+        if (typeof navigator.mediaSession.setActionHandler !== "function") return;
+
+        try {
+          navigator.mediaSession.setActionHandler(action, handler);
+        } catch (error) {}
+      }
+
+      function registerMediaSession() {
+        if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+
+        if ("MediaMetadata" in window) {
+          try {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: "Palak and Shubham",
+              artist: "Wedding Invitation",
+              album: "Palak and Shubham"
+            });
+          } catch (error) {}
+        }
+
+        if (!mediaSessionReady) {
+          setMediaActionHandler("play", function() {
+            startBackgroundAudio();
+          });
+          setMediaActionHandler("pause", function() {
+            pauseBackgroundAudio();
+          });
+          setMediaActionHandler("stop", function() {
+            pauseBackgroundAudio();
+            seekToMusicStart();
+            syncMediaSessionState();
+          });
+          mediaSessionReady = true;
+        }
+
+        syncMediaSessionState();
+      }
+
+      function startBackgroundAudio(options) {
+        var shouldRestart = options && options.restart === true;
+
+        if (shouldRestart) {
+          queueMusicStartSeek();
+        }
+
+        registerMediaSession();
+        backgroundAudioHasStarted = true;
+
+        var playRequest = backgroundAudio.play();
+
+        if (playRequest && typeof playRequest.then === "function") {
+          return playRequest.then(function() {
+            removeStartListeners();
+            syncMediaSessionState();
+          }).catch(function(error) {
+            console.warn("Background audio could not start automatically.", error);
+          });
+        }
+
+        removeStartListeners();
+        syncMediaSessionState();
+        return Promise.resolve();
+      }
+
+      function pauseBackgroundAudio() {
+        if (!backgroundAudio.paused) {
+          backgroundAudio.pause();
+        }
+
+        syncMediaSessionState();
+      }
+
+      function removeStartListeners() {
+        document.removeEventListener("pointerdown", handleFirstInteraction);
+        document.removeEventListener("touchstart", handleFirstInteraction);
+        document.removeEventListener("click", handleFirstInteraction);
+        document.removeEventListener("keydown", handleFirstInteraction);
+      }
+
+      function handleFirstInteraction() {
+        removeStartListeners();
+        startBackgroundAudio({ restart: true });
+      }
+
+      function attemptPageLoadAutoplay() {
+        if (backgroundAudioHasStarted || document.hidden) return;
+        startBackgroundAudio({ restart: true });
+      }
+
+      backgroundAudio.addEventListener("play", syncMediaSessionState);
+      backgroundAudio.addEventListener("pause", syncMediaSessionState);
+      backgroundAudio.addEventListener("ended", syncMediaSessionState);
+      registerMediaSession();
+
+      document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+          pauseBackgroundAudio();
+        }
+      });
+      window.addEventListener("blur", pauseBackgroundAudio);
+      window.addEventListener("pagehide", pauseBackgroundAudio);
+
+      document.addEventListener("pointerdown", handleFirstInteraction, { once: true, passive: true });
+      document.addEventListener("touchstart", handleFirstInteraction, { once: true, passive: true });
+      document.addEventListener("click", handleFirstInteraction, { once: true });
+      document.addEventListener("keydown", handleFirstInteraction, { once: true });
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", attemptPageLoadAutoplay, { once: true });
+      } else {
+        window.setTimeout(attemptPageLoadAutoplay, 0);
+      }
+
+      window.addEventListener("load", attemptPageLoadAutoplay, { once: true });
     })();
   </script>
 </body>
