@@ -559,34 +559,20 @@
     })();
 
     (function() {
-      var MUSIC_START_TIME = 51;
       var MUSIC_VOLUME = 0.18;
-      var backgroundAudio = new Audio("../assets/music/a-thousand-years-instrumental.m4a");
+      var backgroundAudio = new Audio("../assets/music/a-thousand-years-instrumental-start-51.m4a");
       var backgroundAudioHasStarted = false;
       var mediaSessionReady = false;
 
       backgroundAudio.loop = true;
       backgroundAudio.preload = "auto";
+      backgroundAudio.autoplay = true;
       backgroundAudio.volume = MUSIC_VOLUME;
 
-      function seekToMusicStart() {
+      function resetBackgroundAudioToStart() {
         try {
-          if (Number.isFinite(backgroundAudio.duration) && backgroundAudio.duration <= MUSIC_START_TIME) {
-            backgroundAudio.currentTime = 0;
-            return;
-          }
-
-          backgroundAudio.currentTime = MUSIC_START_TIME;
+          backgroundAudio.currentTime = 0;
         } catch (error) {}
-      }
-
-      function queueMusicStartSeek() {
-        if (backgroundAudio.readyState > 0) {
-          seekToMusicStart();
-          return;
-        }
-
-        backgroundAudio.addEventListener("loadedmetadata", seekToMusicStart, { once: true });
       }
 
       function syncMediaSessionState() {
@@ -628,7 +614,7 @@
           });
           setMediaActionHandler("stop", function() {
             pauseBackgroundAudio();
-            seekToMusicStart();
+            resetBackgroundAudioToStart();
             syncMediaSessionState();
           });
           mediaSessionReady = true;
@@ -641,7 +627,7 @@
         var shouldRestart = options && options.restart === true;
 
         if (shouldRestart) {
-          queueMusicStartSeek();
+          resetBackgroundAudioToStart();
         }
 
         registerMediaSession();
