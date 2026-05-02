@@ -547,8 +547,141 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
+  function getRsvpLanguage() {
+    return document.body && document.body.getAttribute('data-language') === 'gu' ? 'gu' : 'en';
+  }
+
+  function escapeRsvpHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, function(character) {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[character];
+    });
+  }
+
+  function normalizeRsvpKey(data) {
+    var booleanKeys = ['attending', 'coming', 'isComing', 'willAttend'];
+    for (var index = 0; index < booleanKeys.length; index += 1) {
+      if (typeof (data && data[booleanKeys[index]]) === 'boolean') {
+        return data[booleanKeys[index]] ? 'yes' : 'no';
+      }
+    }
+
+    var rawKey = String((data && data.availabilityKey) || '').toLowerCase();
+    if (rawKey === 'yes' || rawKey === 'no') return rawKey;
+
+    var rawAvailability = String((data && (data.availability || data.status || data.rsvpStatus)) || '').toLowerCase();
+    if (rawAvailability === 'yes' || rawAvailability === 'attending' || rawAvailability === 'coming') return 'yes';
+    if (rawAvailability === 'no' || rawAvailability === 'not attending' || rawAvailability === 'declined') return 'no';
+    if (rawAvailability.indexOf('yes') !== -1 || rawAvailability.indexOf('હા') !== -1) return 'yes';
+    if (rawAvailability.indexOf('unfortunately') !== -1 || rawAvailability.indexOf('દુર્ભાગ્યે') !== -1) return 'no';
+
+    return '';
+  }
+
+  function getRsvpConfirmationCopy(data) {
+    var language = getRsvpLanguage();
+    var key = normalizeRsvpKey(data);
+    var name = String((data && data.name) || '').trim();
+    var roomNumber = String((data && data.roomNumber) || '').trim();
+    var salutation = name ? ', ' + name : '';
+
+    if (language === 'gu') {
+      if (key === 'no') {
+        return {
+          state: 'no',
+          title: 'તમારી ખોટ લાગશે',
+          message: 'આભાર' + salutation + '. તમે આવી શકશો નહીં તે સાંભળીને અમને દુઃખ થયું. યોજનાઓ બદલાય તો તમે RSVP અપડેટ કરી શકો છો.',
+          action: 'RSVP બદલો'
+        };
+      }
+
+      return {
+        state: 'yes',
+        title: 'હાજરી પુષ્ટિ થઈ',
+        message: roomNumber ? 'આભાર' + salutation + '. તમારો રૂમ નંબર ' + roomNumber + ' છે.' : 'આભાર' + salutation + '. તમારી હાજરીની પુષ્ટિ થઈ છે. તમારા રૂમ નંબરની માહિતી ટૂંક સમયમાં શેર કરીશું.',
+        action: ''
+      };
+    }
+
+    if (key === 'no') {
+      return {
+        state: 'no',
+        title: "We're sorry you can't make it",
+        message: 'Thank you' + salutation + ' for letting us know. If your plans change, you can update your RSVP.',
+        action: 'Change RSVP'
+      };
+    }
+
+    return {
+      state: 'yes',
+      title: 'Attendance confirmed',
+      message: roomNumber ? 'Thank you' + salutation + '. Your room number is ' + roomNumber + '.' : 'Thank you' + salutation + '. You have confirmed your attendance. We will share your room number soon.',
+      action: ''
+    };
+  }
+
+  function buildRsvpConfirmationHtml(data) {
+    var copy = getRsvpConfirmationCopy(data);
+    var actionHtml = copy.state === 'no'
+      ? '<button type="button" class="vp-rsvp-change-button" data-rsvp-change="true">' + escapeRsvpHtml(copy.action) + '</button>'
+      : '';
+
+    return '<div class="vp-rsvp-success-card vp-rsvp-success-card--' + copy.state + '" role="status" data-rsvp-state="' + copy.state + '">' +
+      '<div class="vp-rsvp-success-badge" aria-hidden="true"></div>' +
+      '<div class="vp-rsvp-success-copy"><strong>' + escapeRsvpHtml(copy.title) + '</strong><span>' + escapeRsvpHtml(copy.message) + '</span></div>' +
+      actionHtml +
+      '</div>';
+  }
+
+  function getBackendRsvpData(response, fallbackData) {
+    if (!response || response.type === 'opaque' || typeof response.json !== 'function') {
+      return Promise.resolve(fallbackData);
+    }
+
+    return response.json().then(function(data) {
+      return Object.assign({}, fallbackData, (data && (data.rsvp || data)) || {});
+    }).catch(function() {
+      return fallbackData;
+    });
+  }
+
+  function restoreRsvpForm() {
+    var successBox = form.querySelector('.js-successbox');
+    var inputsBox = form.querySelector('.t-form__inputsbox');
+
+    setSuccessState(false);
+    setDeadlineMessageVisible(true);
+    if (successBox) {
+      successBox.style.display = 'none';
+      successBox.innerHTML = '';
+    }
+    if (inputsBox) inputsBox.style.display = '';
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      setSubmitText(getRsvpLanguage() === 'gu' ? 'મોકલો' : 'Submit');
+    }
+
+    var selectedAvailability = form.querySelector('input.t-checkbox:checked');
+    var focusTarget = selectedAvailability || form.querySelector('input[name="Your name"]') || submitBtn;
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+      focusTarget.focus();
+    }
+  }
+
   setDeadlineMessageVisible(true);
   setSuccessState(false);
+
+  form.addEventListener('click', function(e) {
+    var changeButton = e.target && e.target.closest ? e.target.closest('[data-rsvp-change]') : null;
+    if (!changeButton) return;
+    if (!changeButton.closest('[data-rsvp-state="no"]')) return;
+    restoreRsvpForm();
+  });
 
   form.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -589,10 +722,16 @@ document.addEventListener('DOMContentLoaded', function() {
         availability: availability,
         availabilityKey: availabilityPayload.key
       })
-    }).then(function(){
+    }).then(function(response) {
+      return getBackendRsvpData(response, {
+        name: name,
+        availability: availability,
+        availabilityKey: availabilityPayload.key
+      });
+    }).then(function(rsvpData){
       if (successBox) {
         successBox.style.display = 'block';
-        successBox.innerHTML = '<div class="vp-rsvp-success-card" role="status"><div class="vp-rsvp-success-badge" aria-hidden="true">✓</div><div class="vp-rsvp-success-copy"><strong>Thank you!</strong><span>We look forward to celebrating with you.</span></div></div>';
+        successBox.innerHTML = buildRsvpConfirmationHtml(rsvpData);
       }
       setDeadlineMessageVisible(false);
       if (inputsBox) inputsBox.style.display = 'none';
@@ -600,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(function(){
       if (submitBtn) {
         submitBtn.disabled = false;
-        setSubmitText('Submit');
+        setSubmitText(getRsvpLanguage() === 'gu' ? 'મોકલો' : 'Submit');
       }
       alert('Something went wrong. Please try again.');
     });
@@ -611,17 +750,17 @@ var VP_EVENT_TIMELINE_CONTENT = {
   en: {
     title: 'Event Timeline',
     items: [
-      { text: '19 Nov 8 pm - Sangeet and Cocktail Night', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
-      { text: '20 Nov 10 am - Haldi', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
-      { text: '20 Nov 7 pm - Shadi Night', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
+      { eventTitle: 'Sangeet and Cocktail Night', text: '19 Nov 8 pm - Sangeet and Cocktail Night', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { eventTitle: 'Haldi', text: '20 Nov 10 am - Haldi', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
+      { eventTitle: 'Shadi Night', text: '20 Nov 7 pm - Shadi Night', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
     ]
   },
   gu: {
     title: 'ઇવેન્ટ ટાઇમલાઇન',
     items: [
-      { text: '૧૯ નવેમ્બર સાંજે ૮ વાગ્યે - સંગીત અને કોકટેલ નાઇટ', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
-      { text: '૨૦ નવેમ્બર સવારે ૧૦ વાગ્યે - હળદી', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
-      { text: '૨૦ નવેમ્બર સાંજે ૭ વાગ્યે - લગ્ન રાત્રિ', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
+      { eventTitle: 'Sangeet and Cocktail Night', text: '૧૯ નવેમ્બર સાંજે ૮ વાગ્યે - સંગીત અને કોકટેલ નાઇટ', x: '7.45%', y: '0.97%', width: '60.00%', dotX: 5, dotY: 25 },
+      { eventTitle: 'Haldi', text: '૨૦ નવેમ્બર સવારે ૧૦ વાગ્યે - હળદી', x: '39.36%', y: '23.74%', width: '50.00%', dotX: 150, dotY: 143 },
+      { eventTitle: 'Shadi Night', text: '૨૦ નવેમ્બર સાંજે ૭ વાગ્યે - લગ્ન રાત્રિ', x: '43.62%', y: '37.16%', width: '42.00%', dotX: 167, dotY: 207 }
     ]
   }
 };
@@ -669,6 +808,7 @@ function vpCreateEventTimelineMarkup() {
   return [
     '<section class="vp-event-timeline" aria-label="Event Timeline">',
     '  <h2 class="vp-event-timeline__title" data-role="title"></h2>',
+    '  <span data-di-invited-events hidden></span>',
     '  <div class="vp-event-timeline__canvas">',
     '    <div class="vp-event-timeline__stage">',
     '    <svg class="vp-event-timeline__svg" viewBox="0 0 440 514" aria-hidden="true">',
@@ -711,18 +851,21 @@ function vpBuildEventTimelineItems(items, layout) {
       itemTop: '20%',
       itemWidth: '60%'
     };
+    var eventTitle = vpEscapeAttribute(item.eventTitle || '');
 
     return [
-      '<article class="vp-event-timeline__item" style="--item-x:', position.itemLeft, ';--item-y:', position.itemTop, ';--item-width:', position.itemWidth, ';">',
+      '<article class="vp-event-timeline__item" data-di-event-title="', eventTitle, '" style="--item-x:', position.itemLeft, ';--item-y:', position.itemTop, ';--item-width:', position.itemWidth, ';">',
       '  <span class="vp-event-timeline__item-text">', item.text, '</span>',
       '</article>'
     ].join('');
   }).join('');
 }
 
-function vpBuildEventTimelineDots(layout) {
-  return layout.map(function(position) {
-    return '<circle class="vp-event-timeline__dot" cx="' + position.dotX + '" cy="' + position.dotY + '" r="4"></circle>';
+function vpBuildEventTimelineDots(items, layout) {
+  return layout.map(function(position, index) {
+    var item = items[index] || {};
+    var eventTitle = vpEscapeAttribute(item.eventTitle || '');
+    return '<circle class="vp-event-timeline__dot" data-di-event-title="' + eventTitle + '" cx="' + position.dotX + '" cy="' + position.dotY + '" r="4"></circle>';
   }).join('');
 }
 
@@ -738,8 +881,9 @@ function vpRenderEventTimeline(lang) {
   var layout = vpGetEventTimelineLayout(path, content.items);
 
   if (title) title.textContent = content.title;
-  if (dots) dots.innerHTML = vpBuildEventTimelineDots(layout);
+  if (dots) dots.innerHTML = vpBuildEventTimelineDots(content.items, layout);
   if (items) items.innerHTML = vpBuildEventTimelineItems(content.items, layout);
+  if (typeof vpApplyDigitalInviteGuestContext === 'function') vpApplyDigitalInviteGuestContext();
   if (typeof timeline.vpTimelineRefresh === 'function') timeline.vpTimelineRefresh();
 }
 
@@ -992,6 +1136,7 @@ var VP_LOCATION_SECTION_CONTENT = {
       },
       {
         theme: 'sangeet',
+        eventTitle: 'Sangeet and Cocktail Night',
         tag: 'Sangeet & Cocktail',
         date: 'Thursday \u00b7 19 Nov 2026 \u00b7 8:00 PM',
         venue: 'The Palms Town & Country Club',
@@ -1001,6 +1146,7 @@ var VP_LOCATION_SECTION_CONTENT = {
       },
       {
         theme: 'haldi',
+        eventTitle: 'Haldi',
         tag: 'Haldi',
         date: 'Friday \u00b7 20 Nov 2026 \u00b7 10:00 AM',
         venue: 'FabHotel Golf Inn',
@@ -1010,6 +1156,7 @@ var VP_LOCATION_SECTION_CONTENT = {
       },
       {
         theme: 'shadi',
+        eventTitle: 'Shadi Night',
         tag: 'Shadi Night',
         date: 'Friday \u00b7 20 Nov 2026 \u00b7 7:00 PM',
         venue: 'The Bristol Hotel, Gurgaon',
@@ -1040,6 +1187,7 @@ var VP_LOCATION_SECTION_CONTENT = {
       },
       {
         theme: 'sangeet',
+        eventTitle: 'Sangeet and Cocktail Night',
         tag: 'સંગીત અને કોકટેલ',
         date: 'ગુરુવાર \u00b7 19 નવેમ્બર 2026 \u00b7 સાંજ 8:00',
         venue: 'ધ પામ્સ ટાઉન એન્ડ કન્ટ્રી ક્લબ',
@@ -1049,6 +1197,7 @@ var VP_LOCATION_SECTION_CONTENT = {
       },
       {
         theme: 'haldi',
+        eventTitle: 'Haldi',
         tag: 'હળદી',
         date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સવારે 10:00',
         venue: 'ફેબહોટેલ ગોલ્ફ ઇન',
@@ -1058,6 +1207,7 @@ var VP_LOCATION_SECTION_CONTENT = {
       },
       {
         theme: 'shadi',
+        eventTitle: 'Shadi Night',
         tag: 'લગ્ન રાત્રિ',
         date: 'શુક્રવાર \u00b7 20 નવેમ્બર 2026 \u00b7 સાંજ 7:00',
         venue: 'ધ બ્રિસ્ટલ હોટેલ, ગુરુગ્રામ',
@@ -1218,6 +1368,13 @@ function vpBuildLocationCards(items, lang) {
     var mapUrl = item.mapUrl || VP_LOCATION_MAP_URL;
     var hasDetails = Array.isArray(item.details) && item.details.length;
     var cardClassName = 'vp-location__card' + (hasDetails ? '' : ' vp-location__card--compact');
+    var cardAttrs = ' data-theme="' + vpEscapeAttribute(item.theme) + '"';
+    if (item.eventTitle) {
+      cardAttrs += ' data-di-event-title="' + vpEscapeAttribute(item.eventTitle) + '"';
+    }
+    if (item.theme === 'stay') {
+      cardAttrs += ' data-di-stay-allocated';
+    }
     var tags = Array.isArray(item.tags) && item.tags.length ? item.tags : [item.tag];
     var tagsMarkup = tags.map(function(tag) {
       var tagClass = 'vp-location__tag';
@@ -1240,7 +1397,7 @@ function vpBuildLocationCards(items, lang) {
       '</div>'
     ].join('') : '';
     return [
-      '<article class="', cardClassName, '" data-theme="', item.theme, '">',
+      '<article class="', cardClassName, '"', cardAttrs, '>',
       '  <div class="vp-location__media">',
       '    <img src="', image, '" alt="', vpLocalizeGujaratiValue(lang, item.venue || VP_LOCATION_IMAGE_ALT), '" loading="lazy">',
       '  </div>',
@@ -1282,6 +1439,7 @@ function vpRenderLocationSection(lang) {
   }
   if (hint) hint.textContent = content.hint;
   if (note) note.textContent = content.note;
+  if (typeof vpApplyDigitalInviteGuestContext === 'function') vpApplyDigitalInviteGuestContext();
   vpSyncLocationSectionMode(section);
 }
 
@@ -1295,6 +1453,7 @@ var VP_DRESS_CODE_CONTENT = {
     items: [
       {
         theme: 'haldi',
+        eventTitle: 'Haldi',
         eventLabel: 'Haldi',
         moodLabel: 'Day Festive',
         dressValue: 'Hues of Yellow',
@@ -1302,6 +1461,7 @@ var VP_DRESS_CODE_CONTENT = {
       },
       {
         theme: 'sangeet',
+        eventTitle: 'Sangeet and Cocktail Night',
         eventLabel: 'Sangeet & Cocktail',
         moodLabel: 'Evening Glam',
         dressValue: 'Glitz & Glam Indo Western',
@@ -1310,6 +1470,7 @@ var VP_DRESS_CODE_CONTENT = {
       },
       {
         theme: 'wedding',
+        eventTitle: 'Shadi Night',
         eventLabel: 'Wedding',
         moodLabel: 'Regal Elegance',
         dressValue: 'Royal Indian Attire',
@@ -1326,6 +1487,7 @@ var VP_DRESS_CODE_CONTENT = {
     items: [
       {
         theme: 'haldi',
+        eventTitle: 'Haldi',
         eventLabel: 'હળદી',
         moodLabel: 'દિવસની મજા',
         dressValue: 'પીળા રંગના શેડ્સ',
@@ -1333,6 +1495,7 @@ var VP_DRESS_CODE_CONTENT = {
       },
       {
         theme: 'sangeet',
+        eventTitle: 'Sangeet and Cocktail Night',
         eventLabel: 'સંગીત અને કોકટેલ',
         moodLabel: 'સાંજનો ગ્લેમર',
         dressValue: 'ગ્લિટ્ઝ એન્ડ ગ્લેમ ઇન્ડો વેસ્ટર્ન',
@@ -1341,6 +1504,7 @@ var VP_DRESS_CODE_CONTENT = {
       },
       {
         theme: 'wedding',
+        eventTitle: 'Shadi Night',
         eventLabel: 'લગ્ન',
         moodLabel: 'રાજસી શાન',
         dressValue: 'રોયલ ઇન્ડિયન અટાયર',
@@ -1381,10 +1545,14 @@ function vpBuildDressCodeCards(content) {
   return content.items.map(function(item) {
     var classes = ['vp-dress__card', 'vp-dress__reveal'];
     var image = VP_DRESS_CODE_IMAGES[item.theme];
+    var cardAttrs = ' data-theme="' + vpEscapeAttribute(item.theme) + '"';
     if (item.offset) classes.push('vp-dress__card--offset');
+    if (item.eventTitle) {
+      cardAttrs += ' data-di-event-title="' + vpEscapeAttribute(item.eventTitle) + '"';
+    }
 
     return [
-      '<article class="', classes.join(' '), '" data-theme="', item.theme, '">',
+      '<article class="', classes.join(' '), '"', cardAttrs, '>',
       '  <div class="vp-dress__frame">',
       '    <div class="vp-dress__photo">',
       image ? '      <img src="' + image + '" alt="' + item.eventLabel + ' attire inspiration" loading="lazy">' : '',
@@ -1472,6 +1640,7 @@ function vpRenderDressCodeSection(lang) {
     vpEnhanceHorizontalScroller(grid);
   }
   if (hint) hint.textContent = content.swipeHint || '';
+  if (typeof vpApplyDigitalInviteGuestContext === 'function') vpApplyDigitalInviteGuestContext();
 
   if (section.classList.contains('is-visible')) {
     section.classList.remove('is-visible');
@@ -1608,6 +1777,248 @@ function vpEnsureHeroScrollCue() {
 
   vpUpdateHeroScrollCueLanguage();
   return cue;
+}
+
+var VP_DIGITAL_INVITE_GUEST = null;
+var VP_DIGITAL_INVITE_HAS_CONTEXT = false;
+
+function vpEscapeHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[character];
+  });
+}
+
+function vpEscapeAttribute(value) {
+  return vpEscapeHtml(value);
+}
+
+function vpGetDigitalInviteLanguage() {
+  return document.body && document.body.getAttribute('data-language') === 'gu' ? 'gu' : 'en';
+}
+
+function vpGetDigitalInviteFallback(lang) {
+  if (lang === 'gu') {
+    return {
+      salutation: 'પ્રિય',
+      name: 'મિત્રો અને પરિવાર',
+      invitedEvents: 'બધા કાર્યક્રમો',
+      roomPending: 'ટૂંક સમયમાં શેર થશે',
+      stayAllocated: 'રહેઠાણ ફાળવ્યું છે: રૂમ ',
+      noStay: 'આ આમંત્રણ માટે રહેઠાણ ફાળવવામાં આવ્યું નથી.'
+    };
+  }
+
+  return {
+    salutation: 'Dear',
+    name: 'Friends and Family',
+    invitedEvents: 'All events',
+    roomPending: 'to be shared soon',
+    stayAllocated: 'Stay allocated: Room ',
+    noStay: 'No stay has been allocated for this invite.'
+  };
+}
+
+function vpBuildDigitalInviteGreetingHtml(lang) {
+  var fallback = vpGetDigitalInviteFallback(lang);
+
+  return '<span data-di-guest-label><span data-di-guest-salutation>' +
+    vpEscapeHtml(fallback.salutation) +
+    '</span> <span data-di-guest-name>' +
+    vpEscapeHtml(fallback.name) +
+    '</span></span>,';
+}
+
+function vpBuildDigitalInviteStayHtml(lang) {
+  var fallback = vpGetDigitalInviteFallback(lang);
+
+  return '<span data-di-stay-allocated hidden>' +
+    vpEscapeHtml(fallback.stayAllocated) +
+    '<span data-di-room-number>' +
+    vpEscapeHtml(fallback.roomPending) +
+    '</span></span><span data-di-no-stay hidden>' +
+    vpEscapeHtml(fallback.noStay) +
+    '</span>';
+}
+
+function vpNormalizeDigitalInviteEventTitle(value) {
+  return String(value == null ? '' : value)
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function vpCanonicalDigitalInviteEventTitle(value) {
+  var raw = String(value == null ? '' : value).trim().toLowerCase();
+  if (raw.indexOf('સંગીત') !== -1) return 'sangeet and cocktail night';
+  if (raw.indexOf('હળદી') !== -1) return 'haldi';
+  if (raw.indexOf('લગ્ન') !== -1) return 'shadi night';
+
+  var normalized = vpNormalizeDigitalInviteEventTitle(value);
+  if (!normalized) return '';
+
+  if (normalized === 'sangeet cocktail' || normalized === 'sangeet and cocktail' || normalized === 'sangeet and cocktail night') {
+    return 'sangeet and cocktail night';
+  }
+
+  if (normalized === 'shaadi night' || normalized === 'shadi' || normalized === 'shaadi' || normalized === 'wedding' || normalized === 'wedding night') {
+    return 'shadi night';
+  }
+
+  return normalized;
+}
+
+function vpNormalizeDigitalInviteEvents(value) {
+  if (Array.isArray(value)) {
+    return value.map(function(item) {
+      if (item && typeof item === 'object') {
+        return item.eventTitle || item.title || item.name || item.label || '';
+      }
+
+      return item;
+    }).map(function(item) {
+      return String(item == null ? '' : item).trim();
+    }).filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value.split(/[,;\n|]+/).map(function(item) {
+      return item.trim();
+    }).filter(Boolean);
+  }
+
+  return [];
+}
+
+function vpGetDigitalInviteInvitedEvents() {
+  return VP_DIGITAL_INVITE_GUEST ? vpNormalizeDigitalInviteEvents(VP_DIGITAL_INVITE_GUEST.invitedEvents) : [];
+}
+
+function vpShouldShowDigitalInviteEvent(eventTitle) {
+  if (!VP_DIGITAL_INVITE_HAS_CONTEXT) return true;
+
+  var invitedEvents = vpGetDigitalInviteInvitedEvents();
+  if (!invitedEvents.length) return true;
+
+  var currentTitle = vpCanonicalDigitalInviteEventTitle(eventTitle);
+  return invitedEvents.some(function(invitedTitle) {
+    return vpCanonicalDigitalInviteEventTitle(invitedTitle) === currentTitle;
+  });
+}
+
+function vpSetDigitalInviteVisibility(element, isVisible) {
+  if (!element) return;
+
+  element.hidden = !isVisible;
+  element.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+
+  if (isVisible) {
+    element.style.removeProperty('display');
+  } else {
+    element.style.display = 'none';
+  }
+}
+
+function vpApplyDigitalInviteEventVisibility() {
+  document.querySelectorAll('[data-di-event-title]').forEach(function(element) {
+    vpSetDigitalInviteVisibility(element, vpShouldShowDigitalInviteEvent(element.getAttribute('data-di-event-title')));
+  });
+}
+
+function vpParseDigitalInviteStayAllocated(value, roomNumber) {
+  if (typeof value === 'boolean') return value;
+  if (value == null || value === '') return roomNumber ? true : null;
+
+  var normalized = String(value).trim().toLowerCase();
+  if (!normalized) return roomNumber ? true : null;
+  if (['true', 'yes', 'y', '1', 'allocated', 'stay allocated'].indexOf(normalized) !== -1) return true;
+  if (['false', 'no', 'n', '0', 'none', 'not allocated', 'no stay'].indexOf(normalized) !== -1) return false;
+
+  return roomNumber ? true : null;
+}
+
+function vpApplyDigitalInviteStay(detail) {
+  if (!VP_DIGITAL_INVITE_HAS_CONTEXT) return;
+
+  var lang = vpGetDigitalInviteLanguage();
+  var fallback = vpGetDigitalInviteFallback(lang);
+  var roomNumber = String((detail && detail.roomNumber) || '').trim();
+  var stayAllocated = vpParseDigitalInviteStayAllocated(detail && detail.stayAllocated, roomNumber);
+
+  document.querySelectorAll('[data-di-room-number]').forEach(function(element) {
+    element.textContent = roomNumber || fallback.roomPending;
+  });
+
+  if (stayAllocated === null) return;
+
+  document.querySelectorAll('[data-di-stay-allocated]').forEach(function(element) {
+    vpSetDigitalInviteVisibility(element, stayAllocated);
+  });
+
+  document.querySelectorAll('[data-di-no-stay]').forEach(function(element) {
+    vpSetDigitalInviteVisibility(element, !stayAllocated);
+  });
+}
+
+function vpApplyDigitalInviteText(detail) {
+  if (!VP_DIGITAL_INVITE_HAS_CONTEXT) return;
+
+  var lang = vpGetDigitalInviteLanguage();
+  var fallback = vpGetDigitalInviteFallback(lang);
+  var salutation = String((detail && detail.salutation) || fallback.salutation).trim();
+  var name = String((detail && detail.name) || fallback.name).trim();
+  var invitedEvents = vpGetDigitalInviteInvitedEvents();
+  var invitedEventsText = invitedEvents.length ? invitedEvents.join(', ') : fallback.invitedEvents;
+  var customMessage = String((detail && detail.customMessage) || '').trim();
+
+  document.querySelectorAll('[data-di-guest-salutation]').forEach(function(element) {
+    element.textContent = salutation;
+  });
+
+  document.querySelectorAll('[data-di-guest-name]').forEach(function(element) {
+    element.textContent = name;
+  });
+
+  document.querySelectorAll('[data-di-guest-label]').forEach(function(element) {
+    if (element.querySelector('[data-di-guest-salutation], [data-di-guest-name]')) return;
+    element.textContent = (salutation + ' ' + name).trim();
+  });
+
+  document.querySelectorAll('[data-di-invited-events]').forEach(function(element) {
+    element.textContent = invitedEventsText;
+  });
+
+  if (customMessage) {
+    var invitationCopy = document.querySelector('#rec2002273681 [field="tn_text_1763405268776"]');
+    if (invitationCopy) invitationCopy.textContent = customMessage;
+  }
+}
+
+function vpApplyDigitalInviteGuestContext() {
+  var detail = VP_DIGITAL_INVITE_GUEST || {};
+
+  vpApplyDigitalInviteText(detail);
+  vpApplyDigitalInviteStay(detail);
+  vpApplyDigitalInviteEventVisibility();
+}
+
+document.addEventListener('digitalinvite:guest', function(event) {
+  VP_DIGITAL_INVITE_HAS_CONTEXT = true;
+  VP_DIGITAL_INVITE_GUEST = Object.assign({}, event && event.detail ? event.detail : {});
+  vpApplyDigitalInviteGuestContext();
+});
+
+if (window.__digitalInviteGuestDetail) {
+  VP_DIGITAL_INVITE_HAS_CONTEXT = true;
+  VP_DIGITAL_INVITE_GUEST = Object.assign({}, window.__digitalInviteGuestDetail);
+  vpApplyDigitalInviteGuestContext();
 }
 
 function vpNeutralizeOpeningSealScaleAnimation(envelope) {
@@ -2090,6 +2501,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     vpUpdateHeroScrollCueLanguage();
+    vpApplyDigitalInviteGuestContext();
   }
 
   function setEnglish() {
@@ -2100,7 +2512,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_1773926384566"]', 'Click to open');
     setHtml('[field="tn_text_1774451670001"]', 'With joyful hearts, we invite you to unfold our story.');
 
-    setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'Dear Friends and Family,');
+    setHtml('#rec2002273681 [field="tn_text_1763405219328"]', vpBuildDigitalInviteGreetingHtml('en'));
     setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'With joyful hearts and countless blessings, we warmly invite you to celebrate the wedding of Palak and Shubham and witness the beginning of their beautiful forever together.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'The Celebration Begins In');
@@ -2115,7 +2527,7 @@ document.addEventListener('DOMContentLoaded', function() {
     vpRenderDressCodeSection('en');
 
     setHtml('#rec2003555721 [field="tn_text_1771277026942000001"]', 'Details');
-    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', '');
+    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', vpBuildDigitalInviteStayHtml('en'));
     setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'Your gracious presence and blessings will make the day even more memorable.');
     setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'For more details, contact Manish Katira');
     setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '7028028194', '+917028028194', 'Tap to call');
@@ -2149,7 +2561,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setHtml('[field="tn_text_1773926384566"]', 'ખોલવા માટે ક્લિક કરો');
     setHtml('[field="tn_text_1774451670001"]', 'આનંદભર્યા હૃદયોથી, અમે તમને અમારી વાર્તા ખુલ્લી જોવા આમંત્રિત કરીએ છીએ.');
 
-    setHtml('#rec2002273681 [field="tn_text_1763405219328"]', 'પ્રિય મિત્રો અને પરિવાર,');
+    setHtml('#rec2002273681 [field="tn_text_1763405219328"]', vpBuildDigitalInviteGreetingHtml('gu'));
     setHtml('#rec2002273681 [field="tn_text_1763405268776"]', 'આનંદભર્યા હૃદયો અને અગણિત આશીર્વાદ સાથે, અમે આપને પલક અને શુભમના લગ્નોત્સવમાં હાર્દિક આમંત્રિત કરીએ છીએ અને તેમના સુંદર સદાયના સફરની શરૂઆતના સાક્ષી બનવા આમંત્રણ આપીએ છીએ.');
 
     setHtml('#rec2002274581 [field="tn_text_1771277026942000001"]', 'ઉજવણી શરૂ થવામાં બાકી છે');
@@ -2164,7 +2576,7 @@ document.addEventListener('DOMContentLoaded', function() {
     vpRenderDressCodeSection('gu');
 
     setHtml('#rec2003555721 [field="tn_text_1771277026942000001"]', 'વિગતો');
-    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', '');
+    setHtml('#rec2003555721 [field="tn_text_1772804808869"]', vpBuildDigitalInviteStayHtml('gu'));
     setHtml('#rec2003555721 [field="tn_text_1772822506940000003"]', 'આપની સ્નેહભરી ઉપસ્થિતિ અને આશીર્વાદ આ દિવસને વધુ યાદગાર બનાવશે.');
     setHtml('#rec2003555721 [field="tn_text_1772822008587000001"]', 'વધુ વિગતો માટે, મનીષ કટીરાનો સંપર્ક કરો');
     setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '૭૦૨૮૦૨૮૧૯૪', '+917028028194', 'ટૅપ કરીને કૉલ કરો');

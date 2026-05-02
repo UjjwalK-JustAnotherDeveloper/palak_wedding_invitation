@@ -327,35 +327,77 @@
 
     @media (max-width: 720px) {
       .std-page {
+        min-height: max(100vh, 720px);
+        min-height: max(100dvh, 720px);
         padding: 18px 16px 18px;
       }
 
+      .std-photo {
+        object-position: 56% center;
+        opacity: 0.24;
+        transform: scale(1.03);
+      }
+
+      .std-page::before {
+        background:
+          linear-gradient(180deg, rgba(61, 1, 18, 0.78) 0%, rgba(102, 2, 31, 0.5) 36%, rgba(102, 2, 31, 0.64) 58%, rgba(61, 1, 18, 0.92) 100%),
+          radial-gradient(ellipse at 50% 70%, rgba(255, 250, 248, 0.16), rgba(255, 250, 248, 0) 46%);
+      }
+
       .std-home {
-        min-height: 62px;
-        padding: 0 26px;
+        display: block;
+        justify-self: stretch;
+        width: 100%;
+        max-width: none;
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        margin-top: clamp(100px, 15vh, 126px);
+        font-size: clamp(42px, 11vw, 50px);
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .std-home::after {
+        content: "";
+        display: block;
+        width: clamp(76px, 22vw, 104px);
+        height: 1px;
+        margin: 10px auto 0;
+        background: linear-gradient(90deg, rgba(203, 161, 90, 0), rgba(203, 161, 90, 0.82) 48%, rgba(255, 250, 248, 0.78) 50%, rgba(203, 161, 90, 0.82) 52%, rgba(203, 161, 90, 0));
+        box-shadow: 0 1px 10px rgba(203, 161, 90, 0.18);
       }
 
       .std-shell {
         min-height: calc(100vh - 36px);
         min-height: calc(100dvh - 36px);
+        min-height: calc(max(100dvh, 720px) - 36px);
         max-width: 360px;
       }
 
       .std-content {
-        gap: 18px;
+        flex: 0 0 auto;
+        align-content: start;
+        gap: 14px;
+        min-height: calc(100vh - 36px);
+        min-height: calc(100dvh - 36px);
+        min-height: calc(max(100dvh, 720px) - 36px);
         max-width: 340px;
-        padding-top: 18px;
-        padding-bottom: 12px;
-        transform: translateY(-36px);
+        padding: 0 0 clamp(18px, 4vh, 32px);
+        transform: none;
       }
 
       .std-names {
-        gap: 6px;
+        gap: 4px;
+        margin-top: clamp(150px, 19vh, 170px);
+        font-size: clamp(48px, 12.4vw, 56px);
+        line-height: 0.92;
       }
 
       .std-typewriter {
-        min-height: 32px;
-        font-size: clamp(24px, 7vw, 30px);
+        min-height: 30px;
+        font-size: clamp(24px, 6.8vw, 29px);
       }
 
       .std-date-wrap {
@@ -370,7 +412,7 @@
       }
 
       .std-date {
-        font-size: clamp(48px, 13vw, 56px);
+        font-size: clamp(46px, 12vw, 54px);
         letter-spacing: 0.025em;
       }
 
@@ -399,13 +441,64 @@
       }
     }
 
-    @media (max-width: 380px) {
+    @media (max-width: 720px) and (max-height: 720px) {
+      .std-page {
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+
+      .std-shell,
+      .std-content {
+        min-height: calc(100vh - 36px);
+        min-height: calc(100dvh - 36px);
+      }
+
+      .std-content {
+        gap: 12px;
+        padding-bottom: 14px;
+      }
+
+      .std-home {
+        margin-top: 88px;
+        font-size: 40px;
+      }
+
       .std-names {
-        font-size: 48px;
+        margin-top: 132px;
+        font-size: 46px;
+      }
+
+      .std-typewriter {
+        min-height: 28px;
+        font-size: 24px;
+      }
+
+      .std-date {
+        font-size: 44px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .std-photo {
+        object-position: 50% center;
+      }
+
+      .std-names {
+        font-size: 46px;
       }
 
       .std-countdown {
-        gap: 8px;
+        gap: 2px;
+        max-width: 300px;
+      }
+
+      .std-time-block {
+        width: 52px;
+      }
+
+      .std-label {
+        font-size: 8px;
+        letter-spacing: 0.04em;
       }
     }
 
@@ -419,7 +512,7 @@
 </head>
 <body>
   <main class="std-page">
-    <img class="std-photo" src="../assets/images/image.png" alt="Palak and Shubham together" loading="eager" decoding="async">
+    <img class="std-photo" src="../assets/images/e8174740-094c-4a9c-a832-f90406e5a4b1.jpg" alt="Palak and Shubham together" loading="eager" decoding="async">
     <div class="std-shell">
       <section class="std-content" aria-labelledby="save-the-date-title">
         <span class="std-home std-home--badge">Save the Date</span>
@@ -506,7 +599,7 @@
       var typewriter = document.getElementById("std-typewriter-text");
       if (!typewriter) return;
 
-      var words = ["gets", "takes", "marries"];
+      var words = ["finds", "gets","troubles","marries", "keeps"];
       var wordIndex = 0;
       var charIndex = words[0].length;
       var deleting = false;
@@ -559,19 +652,28 @@
     })();
 
     (function() {
-      var MUSIC_VOLUME = 0.18;
-      var backgroundAudio = new Audio("../assets/music/a-thousand-years-instrumental-start-51.m4a");
+      var MUSIC_URL = "../assets/music/Mere Sohneya __ Kabir singh __ Flute cover __ Santosh Naik and Swapnil Sonar.mp3";
+      var MUSIC_START_SECONDS = 5;
+      var MUSIC_VOLUME = 0.28;
+      var backgroundAudio = new Audio(MUSIC_URL);
       var backgroundAudioHasStarted = false;
+      var backgroundAudioNeedsUnmute = false;
+      var backgroundAudioPlayPending = false;
+      var backgroundAudioMutedFallbackTried = false;
+      var backgroundAudioAutoplayBlocked = false;
       var mediaSessionReady = false;
 
-      backgroundAudio.loop = true;
+      backgroundAudio.loop = false;
       backgroundAudio.preload = "auto";
       backgroundAudio.autoplay = true;
+      backgroundAudio.muted = false;
       backgroundAudio.volume = MUSIC_VOLUME;
 
-      function resetBackgroundAudioToStart() {
+      function seekBackgroundAudioToStart() {
         try {
-          backgroundAudio.currentTime = 0;
+          if (backgroundAudio.readyState > 0) {
+            backgroundAudio.currentTime = MUSIC_START_SECONDS;
+          }
         } catch (error) {}
       }
 
@@ -598,8 +700,8 @@
         if ("MediaMetadata" in window) {
           try {
             navigator.mediaSession.metadata = new MediaMetadata({
-              title: "Palak and Shubham",
-              artist: "Wedding Invitation",
+              title: "Mere Sohneya",
+              artist: "Santosh Naik and Swapnil Sonar",
               album: "Palak and Shubham"
             });
           } catch (error) {}
@@ -614,7 +716,7 @@
           });
           setMediaActionHandler("stop", function() {
             pauseBackgroundAudio();
-            resetBackgroundAudioToStart();
+            seekBackgroundAudioToStart();
             syncMediaSessionState();
           });
           mediaSessionReady = true;
@@ -625,26 +727,92 @@
 
       function startBackgroundAudio(options) {
         var shouldRestart = options && options.restart === true;
+        var forceAudible = options && options.forceAudible === true;
+        var allowMutedFallback = options && options.allowMutedFallback === true;
 
-        if (shouldRestart) {
-          resetBackgroundAudioToStart();
+        if (forceAudible) {
+          backgroundAudio.muted = false;
+          backgroundAudio.volume = MUSIC_VOLUME;
+          backgroundAudioNeedsUnmute = false;
+        }
+
+        if (backgroundAudioPlayPending) {
+          return Promise.resolve();
+        }
+
+        if (shouldRestart || backgroundAudio.currentTime < MUSIC_START_SECONDS) {
+          seekBackgroundAudioToStart();
         }
 
         registerMediaSession();
-        backgroundAudioHasStarted = true;
+        backgroundAudioPlayPending = true;
 
         var playRequest = backgroundAudio.play();
 
         if (playRequest && typeof playRequest.then === "function") {
           return playRequest.then(function() {
-            removeStartListeners();
+            backgroundAudioHasStarted = true;
+            backgroundAudioPlayPending = false;
+            backgroundAudioAutoplayBlocked = false;
+
+            if (!backgroundAudio.muted) {
+              removeStartListeners();
+            }
+
             syncMediaSessionState();
           }).catch(function(error) {
+            backgroundAudioHasStarted = false;
+            backgroundAudioPlayPending = false;
+
+            if (allowMutedFallback && !backgroundAudioMutedFallbackTried && !forceAudible) {
+              return startMutedBackgroundAudio();
+            }
+
+            if (allowMutedFallback) {
+              backgroundAudioAutoplayBlocked = true;
+            }
+
             console.warn("Background audio could not start automatically.", error);
           });
         }
 
+        backgroundAudioHasStarted = true;
+        backgroundAudioPlayPending = false;
         removeStartListeners();
+        syncMediaSessionState();
+        return Promise.resolve();
+      }
+
+      function startMutedBackgroundAudio() {
+        backgroundAudioMutedFallbackTried = true;
+        backgroundAudioNeedsUnmute = true;
+        backgroundAudio.muted = true;
+
+        if (backgroundAudio.currentTime < MUSIC_START_SECONDS) {
+          seekBackgroundAudioToStart();
+        }
+
+        backgroundAudioPlayPending = true;
+        var mutedPlayRequest = backgroundAudio.play();
+
+        if (mutedPlayRequest && typeof mutedPlayRequest.then === "function") {
+          return mutedPlayRequest.then(function() {
+            backgroundAudioHasStarted = true;
+            backgroundAudioPlayPending = false;
+            backgroundAudioAutoplayBlocked = false;
+            syncMediaSessionState();
+          }).catch(function(error) {
+            backgroundAudioHasStarted = false;
+            backgroundAudioNeedsUnmute = false;
+            backgroundAudioPlayPending = false;
+            backgroundAudioAutoplayBlocked = true;
+            backgroundAudio.muted = false;
+            console.warn("Background audio could not start muted.", error);
+          });
+        }
+
+        backgroundAudioHasStarted = true;
+        backgroundAudioPlayPending = false;
         syncMediaSessionState();
         return Promise.resolve();
       }
@@ -662,10 +830,10 @@
       var startEvents = [
         { type: "pointerdown", options: passiveStartOptions },
         { type: "pointerup", options: passiveStartOptions },
-        { type: "mousedown", options: passiveStartOptions },
-        { type: "mouseup", options: passiveStartOptions },
         { type: "touchstart", options: passiveStartOptions },
         { type: "touchend", options: passiveStartOptions },
+        { type: "mousedown", options: passiveStartOptions },
+        { type: "mouseup", options: passiveStartOptions },
         { type: "click", options: passiveStartOptions },
         { type: "keydown", options: activeStartOptions }
       ];
@@ -673,39 +841,45 @@
       function addStartListeners() {
         startEvents.forEach(function(eventConfig) {
           window.addEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
+          document.addEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
         });
       }
 
       function removeStartListeners() {
         startEvents.forEach(function(eventConfig) {
           window.removeEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
+          document.removeEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
         });
       }
 
       function handleFirstInteraction() {
-        removeStartListeners();
-        startBackgroundAudio({ restart: true });
+        startBackgroundAudio({ restart: !backgroundAudioHasStarted, forceAudible: true });
       }
 
       function attemptPageLoadAutoplay() {
-        if (backgroundAudioHasStarted || document.hidden) return;
-        startBackgroundAudio({ restart: true });
+        if (backgroundAudioHasStarted || backgroundAudioAutoplayBlocked || document.hidden) return;
+        startBackgroundAudio({ restart: true, allowMutedFallback: true });
       }
 
+      backgroundAudio.addEventListener("loadedmetadata", seekBackgroundAudioToStart);
+      backgroundAudio.addEventListener("canplay", function() {
+        if (!backgroundAudioHasStarted) {
+          seekBackgroundAudioToStart();
+        }
+      }, { once: true });
       backgroundAudio.addEventListener("play", syncMediaSessionState);
       backgroundAudio.addEventListener("pause", syncMediaSessionState);
-      backgroundAudio.addEventListener("ended", syncMediaSessionState);
-      registerMediaSession();
-
-      document.addEventListener("visibilitychange", function() {
-        if (document.hidden) {
-          pauseBackgroundAudio();
-        }
+      backgroundAudio.addEventListener("ended", function() {
+        seekBackgroundAudioToStart();
+        startBackgroundAudio();
       });
-      window.addEventListener("blur", pauseBackgroundAudio);
-      window.addEventListener("pagehide", pauseBackgroundAudio);
 
+      registerMediaSession();
       addStartListeners();
+
+      try {
+        backgroundAudio.load();
+      } catch (error) {}
 
       if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", attemptPageLoadAutoplay, { once: true });
@@ -714,6 +888,16 @@
       }
 
       window.addEventListener("load", attemptPageLoadAutoplay, { once: true });
+      window.addEventListener("pageshow", attemptPageLoadAutoplay);
+      document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+          pauseBackgroundAudio();
+          return;
+        }
+
+        attemptPageLoadAutoplay();
+      });
+      window.addEventListener("pagehide", pauseBackgroundAudio);
     })();
   </script>
 </body>

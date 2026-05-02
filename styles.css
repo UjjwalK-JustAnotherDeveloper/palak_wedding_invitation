@@ -1844,6 +1844,11 @@ body[data-language="gu"] #rec2002273681 .tn-elem[data-elem-id="1763405268776"] .
   text-align: left;
 }
 
+#rec2052858183 .vp-rsvp-success-card--no {
+  background: linear-gradient(180deg, #fffdfc 0%, #fbf4f0 100%);
+  border-color: rgba(102, 2, 31, 0.18);
+}
+
 #rec2052858183 .vp-rsvp-success-badge {
   display: inline-flex;
   align-items: center;
@@ -1858,11 +1863,35 @@ body[data-language="gu"] #rec2002273681 .tn-elem[data-elem-id="1763405268776"] .
   line-height: 1;
 }
 
+#rec2052858183 .vp-rsvp-success-badge::before {
+  content: "";
+  width: 13px;
+  height: 7px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+#rec2052858183 .vp-rsvp-success-card--no .vp-rsvp-success-badge {
+  background: rgba(102, 2, 31, 0.08);
+  color: #66021f;
+}
+
+#rec2052858183 .vp-rsvp-success-card--no .vp-rsvp-success-badge::before {
+  width: 13px;
+  height: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: currentColor;
+  transform: none;
+}
+
 #rec2052858183 .vp-rsvp-success-copy {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 #rec2052858183 .vp-rsvp-success-copy strong {
@@ -1880,6 +1909,39 @@ body[data-language="gu"] #rec2002273681 .tn-elem[data-elem-id="1763405268776"] .
   line-height: 1.5;
 }
 
+#rec2052858183 .vp-rsvp-change-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin-left: auto;
+  padding: 0 16px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(102, 2, 31, 0.18);
+  border-radius: 999px;
+  background: #66021f;
+  color: #fffaf8;
+  cursor: pointer;
+  font-family: 'PTSerif', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+#rec2052858183 .vp-rsvp-change-button:focus-visible {
+  outline: 2px solid #c9a84c;
+  outline-offset: 3px;
+}
+
+@media (hover:hover) {
+  #rec2052858183 .vp-rsvp-change-button:hover {
+    background: #4f0118;
+    border-color: rgba(79, 1, 24, 0.24);
+    transform: translateY(-1px);
+  }
+}
+
 @media screen and (max-width: 640px) {
   #rec2052858183 .t-popup__container.vp-rsvp-success-state {
     max-width: min(92vw, 360px) !important;
@@ -1894,6 +1956,8 @@ body[data-language="gu"] #rec2002273681 .tn-elem[data-elem-id="1763405268776"] .
     gap: 12px;
     padding: 16px 15px;
     border-radius: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   #rec2052858183 .vp-rsvp-success-badge {
@@ -1910,6 +1974,12 @@ body[data-language="gu"] #rec2002273681 .tn-elem[data-elem-id="1763405268776"] .
   #rec2052858183 .vp-rsvp-success-copy span {
     font-size: 14px;
     line-height: 1.45;
+  }
+
+  #rec2052858183 .vp-rsvp-change-button {
+    width: 100%;
+    margin-left: 46px;
+    flex-basis: calc(100% - 46px);
   }
 }
 
@@ -2358,6 +2428,7 @@ body[data-language="gu"] #rec2049114373 .tn-elem[data-elem-id="17634040172045478
 #rec2052858183 .t-form__successbox,
 #rec2052858183 .t-form__errorbox-text,
 #rec2052858183 .vp-rsvp-success-copy span,
+#rec2052858183 .vp-rsvp-change-button,
 .vp-made-with-love {
   font-family: 'PTSerif', Georgia, serif !important;
   font-style: normal !important;
@@ -2630,6 +2701,7 @@ body[data-language="gu"] #rec2052858183 .t-form__successbox,
 body[data-language="gu"] #rec2052858183 .t-form__errorbox-text,
 body[data-language="gu"] #rec2052858183 .vp-rsvp-success-copy strong,
 body[data-language="gu"] #rec2052858183 .vp-rsvp-success-copy span,
+body[data-language="gu"] #rec2052858183 .vp-rsvp-change-button,
 body[data-language="gu"] #rec2003869491 .tn-elem[data-elem-id="1772813849329000001"] .tn-atom,
 body[data-language="gu"] .vp-made-with-love {
   font-family: "Noto Sans Gujarati", "Nirmala UI", "Shruti", Arial, sans-serif !important;
