@@ -3,9 +3,9 @@
  * ║       Palak & Shubham Wedding — script.js                    ║
  * ║  PART 1 · Tilda Library JS (all CDN files inlined)          ║
  * ║  PART 2 · Per-section block initialisers                    ║
- * ║  PART 3 · Custom — Music + RSVP (Google Sheets)            ║
+ * ║  PART 3 · Custom — Music + RSVP (Invitely API)             ║
  * ║  ► Change music  → search vpBackgroundAudio               ║
- * ║  ► RSVP Sheets  → search VP_SHEET_URL                      ║
+ * ║  ► RSVP API     → search VP_RSVP_API_URL                   ║
  * ║  ► Countdown    → search eventLocal=new Date               ║
  * ╚══════════════════════════════════════════════════════════════╝
  */
@@ -474,17 +474,28 @@ window.addEventListener('blur', vpPauseBackgroundAudio);
 window.addEventListener('pagehide', vpPauseBackgroundAudio);
 
 /* ════════════════════════════════════════════════════════════════
-   CUSTOM — RSVP → Google Sheets
+   CUSTOM — RSVP → Invitely API
    ─────────────────────────────────────────────────────────────
-   Standalone mode: this bypasses Tilda's built-in form receiver,
-   so RSVP can be submitted from localhost and any deployed domain.
-   1. Open google-apps-script.gs in this project
-   2. Create an Apps Script project connected to your Google account
-   3. Paste that file there and deploy as Web App with access set to Anyone
-   4. Paste the Web App URL below
-   Note: your Google Sheet sharing link is not a writable API endpoint
+   Standalone mode: this bypasses Tilda's built-in form receiver
+   and submits to the DigitalInvite backend used by published invites.
    ════════════════════════════════════════════════════════════════ */
-var VP_SHEET_URL = "https://script.google.com/macros/s/AKfycbx6ADP68xhzYbTQ0YcdEXrozPrkZ7Yoj6nsmdUVbuHqNmhmjmYBkS7LeyAYjEZsnZNE/exec";
+var VP_RSVP_API_URL = '/api/rsvp';
+var VP_RSVP_DEADLINE_AT = new Date('2026-09-01T00:00:00+05:30').getTime();
+var VP_RSVP_CONTACT = {
+  name: 'Manish Katira',
+  phoneDisplay: '7028028194',
+  phoneHref: '+917028028194'
+};
+var VP_RSVP_STAY_DEFAULTS = {
+  en: {
+    checkIn: '19 Nov 2026, 2:00 PM',
+    checkOut: '21 Nov 2026, 11:00 AM'
+  },
+  gu: {
+    checkIn: '૧૯ નવેમ્બર ૨૦૨૬, બપોરે ૨:૦૦',
+    checkOut: '૨૧ નવેમ્બર ૨૦૨૬, સવારે ૧૧:૦૦'
+  }
+};
 
 document.addEventListener('DOMContentLoaded', function() {
   var form = document.getElementById('form2052858183');
@@ -497,17 +508,22 @@ document.addEventListener('DOMContentLoaded', function() {
   var submitLabel = submitBtn ? submitBtn.querySelector('.t-btnflex__text') : null;
   var popupContainer = document.querySelector('#rec2052858183 .t-popup__container');
   var popupDescription = document.querySelector('#rec2052858183 .t702__descr');
+  var attendanceRecord = document.getElementById('rec2003860951');
+  var attendanceTitle = document.querySelector('#rec2003860951 [field="tn_text_1763405219328"]');
+  var attendanceText = document.querySelector('#rec2003860951 [field="tn_text_1772813849329000001"]');
+  var attendanceButton = document.querySelector('#rec2003860951 [data-elem-id="1772823143441"]');
   var availabilityInputs = Array.prototype.slice.call(form.querySelectorAll('input.t-checkbox'));
   var availabilityOptions = [
-    { key: 'yes', sheetValue: 'Yes, I will' },
-    { key: 'no', sheetValue: "Unfortunately, I can't" }
+    { key: 'yes', label: 'Yes, I will attend' },
+    { key: 'no', label: "I can't attend" }
   ];
 
   availabilityInputs.forEach(function(input, index) {
     var option = availabilityOptions[index];
     if (option) {
       input.setAttribute('data-rsvp-key', option.key);
-      input.setAttribute('data-sheet-value', option.sheetValue);
+      input.setAttribute('data-rsvp-label', option.label);
+      input.value = option.label;
     }
 
     input.addEventListener('change', function() {
@@ -536,6 +552,25 @@ document.addEventListener('DOMContentLoaded', function() {
     popupContainer.classList.toggle('vp-rsvp-success-state', !!isSuccess);
   }
 
+  function setManagedSectionState(state) {
+    if (!attendanceRecord) return;
+    attendanceRecord.classList.toggle('vp-rsvp-section-final', state === 'confirmed' || state === 'closed');
+    attendanceRecord.classList.toggle('vp-rsvp-section-confirmed', state === 'confirmed');
+    attendanceRecord.classList.toggle('vp-rsvp-section-closed', state === 'closed');
+  }
+
+  function setAttendanceButtonVisible(isVisible) {
+    if (!attendanceButton) return;
+    attendanceButton.hidden = !isVisible;
+    attendanceButton.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+    attendanceButton.style.display = isVisible ? '' : 'none';
+  }
+
+  function setAttendanceSectionCopy(copy) {
+    if (attendanceTitle) attendanceTitle.textContent = copy.title;
+    if (attendanceText) attendanceText.innerHTML = copy.message;
+  }
+
   function getAvailabilityPayload(input) {
     if (!input) {
       return { key: '', label: '' };
@@ -543,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     return {
       key: input.getAttribute('data-rsvp-key') || '',
-      label: input.getAttribute('data-sheet-value') || input.value || ''
+      label: input.getAttribute('data-rsvp-label') || input.value || ''
     };
   }
 
@@ -561,6 +596,81 @@ document.addEventListener('DOMContentLoaded', function() {
         "'": '&#39;'
       }[character];
     });
+  }
+
+  function isRsvpClosed() {
+    return Date.now() >= VP_RSVP_DEADLINE_AT;
+  }
+
+  function getCurrentGuestDetail() {
+    return window.__digitalInviteGuestDetail || VP_DIGITAL_INVITE_GUEST || {};
+  }
+
+  function getRsvpGuestName() {
+    var detail = getCurrentGuestDetail();
+    var name = String((detail && (detail.name || detail.displayName)) || '').trim();
+    return name || 'Wedding Guest';
+  }
+
+  function normalizeRsvpBoolean(value) {
+    if (typeof value === 'boolean') return value;
+    if (value == null || value === '') return null;
+
+    var normalized = String(value).trim().toLowerCase();
+    if (!normalized) return null;
+    if (['true', 'yes', 'y', '1', 'allocated', 'stay allocated'].indexOf(normalized) !== -1) return true;
+    if (['false', 'no', 'n', '0', 'none', 'not allocated', 'no stay'].indexOf(normalized) !== -1) return false;
+
+    return null;
+  }
+
+  function getStayField(data, keys, fallback) {
+    for (var index = 0; index < keys.length; index += 1) {
+      var value = data && data[keys[index]];
+      if (value != null && String(value).trim()) return String(value).trim();
+    }
+
+    return fallback;
+  }
+
+  function getAllocatedStay(data) {
+    var source = data || getCurrentGuestDetail();
+    var roomNumber = String((source && (source.roomNumber || source.room || source.roomNo)) || '').trim();
+    var stayAllocated = normalizeRsvpBoolean(source && source.stayAllocated);
+
+    if (!roomNumber || stayAllocated === false) return null;
+
+    var language = getRsvpLanguage();
+    var defaults = VP_RSVP_STAY_DEFAULTS[language] || VP_RSVP_STAY_DEFAULTS.en;
+    return {
+      roomNumber: roomNumber,
+      checkIn: getStayField(source, ['checkIn', 'checkInTime', 'checkInAt'], defaults.checkIn),
+      checkOut: getStayField(source, ['checkOut', 'checkOutTime', 'checkOutAt'], defaults.checkOut)
+    };
+  }
+
+  function normalizeSubdomainValue(value) {
+    return String(value || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  }
+
+  function resolveRsvpSubdomain() {
+    try {
+      var params = new URLSearchParams(window.location.search || '');
+      var querySubdomain = normalizeSubdomainValue(params.get('di_subdomain') || params.get('subdomain'));
+      if (querySubdomain) return querySubdomain;
+    } catch (error) {}
+
+    var host = window.location.hostname.toLowerCase();
+    var rootDomain = 'digitalinvite.co.in';
+    if (host.endsWith('.' + rootDomain)) {
+      var candidate = normalizeSubdomainValue(host.slice(0, -rootDomain.length - 1));
+      if (candidate && ['www', 'media', 'static'].indexOf(candidate) === -1 && candidate.indexOf('.') === -1) {
+        return candidate;
+      }
+    }
+
+    var match = window.location.pathname.match(/^\/i\/([^/]+)/);
+    return match ? normalizeSubdomainValue(match[1]) : '';
   }
 
   function normalizeRsvpKey(data) {
@@ -586,54 +696,93 @@ document.addEventListener('DOMContentLoaded', function() {
   function getRsvpConfirmationCopy(data) {
     var language = getRsvpLanguage();
     var key = normalizeRsvpKey(data);
-    var name = String((data && data.name) || '').trim();
-    var roomNumber = String((data && data.roomNumber) || '').trim();
-    var salutation = name ? ', ' + name : '';
+    var stay = getAllocatedStay(data);
 
     if (language === 'gu') {
+      if (isRsvpClosed()) {
+        return {
+          state: 'closed',
+          title: 'RSVP બંધ થઈ ગયું છે',
+          message: 'હાજરીમાં કોઈ ફેરફાર કરવો હોય તો કૃપા કરીને મનીષ કટીરાને ૭૦૨૮૦૨૮૧૯૪ પર કૉલ કરો.',
+          action: 'કૉલ કરો',
+          details: null
+        };
+      }
+
       if (key === 'no') {
         return {
           state: 'no',
           title: 'તમારી ખોટ લાગશે',
-          message: 'આભાર' + salutation + '. તમે આવી શકશો નહીં તે સાંભળીને અમને દુઃખ થયું. યોજનાઓ બદલાય તો તમે RSVP અપડેટ કરી શકો છો.',
-          action: 'RSVP બદલો'
+          message: 'જણાવવા બદલ આભાર. ૩૧ ઓગસ્ટ પહેલાં યોજનાઓ બદલાય તો તમે અહીં RSVP અપડેટ કરી શકો છો.',
+          action: 'RSVP બદલો',
+          details: null
         };
       }
 
       return {
         state: 'yes',
         title: 'હાજરી પુષ્ટિ થઈ',
-        message: roomNumber ? 'આભાર' + salutation + '. તમારો રૂમ નંબર ' + roomNumber + ' છે.' : 'આભાર' + salutation + '. તમારી હાજરીની પુષ્ટિ થઈ છે. તમારા રૂમ નંબરની માહિતી ટૂંક સમયમાં શેર કરીશું.',
-        action: ''
+        message: stay ? 'તમારી હાજરીની પુષ્ટિ થઈ છે. તમારા રહેવાની વિગતો નીચે આપેલી છે.' : 'તમારી હાજરીની પુષ્ટિ થઈ છે. રૂમની માહિતી ફાળવ્યા પછી અહીં દેખાશે.',
+        action: '',
+        details: stay
+      };
+    }
+
+    if (isRsvpClosed()) {
+      return {
+        state: 'closed',
+        title: 'RSVPs are closed',
+        message: 'For any RSVP changes, please call Manish Katira at 7028028194.',
+        action: 'Call now',
+        details: null
       };
     }
 
     if (key === 'no') {
       return {
         state: 'no',
-        title: "We're sorry you can't make it",
-        message: 'Thank you' + salutation + ' for letting us know. If your plans change, you can update your RSVP.',
-        action: 'Change RSVP'
+        title: "We are sorry you can't make it",
+        message: 'Thank you for letting us know. If your plans change before 31 August, you can update your RSVP here.',
+        action: 'Change RSVP',
+        details: null
       };
     }
 
     return {
       state: 'yes',
       title: 'Attendance confirmed',
-      message: roomNumber ? 'Thank you' + salutation + '. Your room number is ' + roomNumber + '.' : 'Thank you' + salutation + '. You have confirmed your attendance. We will share your room number soon.',
-      action: ''
+      message: stay ? 'Your attendance is confirmed. Here are your stay details.' : 'Your attendance is confirmed. Room details will appear here once they are allocated.',
+      action: '',
+      details: stay
     };
+  }
+
+  function buildStayDetailsHtml(details) {
+    if (!details) return '';
+
+    var language = getRsvpLanguage();
+    var labels = language === 'gu'
+      ? { room: 'રૂમ', checkIn: 'ચેક-ઇન', checkOut: 'ચેક-આઉટ' }
+      : { room: 'Room', checkIn: 'Check-in', checkOut: 'Check-out' };
+
+    return '<dl class="vp-rsvp-stay-details">' +
+      '<div><dt>' + escapeRsvpHtml(labels.room) + '</dt><dd>' + escapeRsvpHtml(details.roomNumber) + '</dd></div>' +
+      '<div><dt>' + escapeRsvpHtml(labels.checkIn) + '</dt><dd>' + escapeRsvpHtml(details.checkIn) + '</dd></div>' +
+      '<div><dt>' + escapeRsvpHtml(labels.checkOut) + '</dt><dd>' + escapeRsvpHtml(details.checkOut) + '</dd></div>' +
+      '</dl>';
   }
 
   function buildRsvpConfirmationHtml(data) {
     var copy = getRsvpConfirmationCopy(data);
-    var actionHtml = copy.state === 'no'
+    var actionHtml = copy.state === 'closed'
+      ? '<a class="vp-rsvp-call-link" href="tel:' + VP_RSVP_CONTACT.phoneHref + '">' + escapeRsvpHtml(copy.action) + '</a>'
+      : copy.state === 'no'
       ? '<button type="button" class="vp-rsvp-change-button" data-rsvp-change="true">' + escapeRsvpHtml(copy.action) + '</button>'
       : '';
 
     return '<div class="vp-rsvp-success-card vp-rsvp-success-card--' + copy.state + '" role="status" data-rsvp-state="' + copy.state + '">' +
       '<div class="vp-rsvp-success-badge" aria-hidden="true"></div>' +
-      '<div class="vp-rsvp-success-copy"><strong>' + escapeRsvpHtml(copy.title) + '</strong><span>' + escapeRsvpHtml(copy.message) + '</span></div>' +
+      '<div class="vp-rsvp-success-copy"><strong>' + escapeRsvpHtml(copy.title) + '</strong><span>' + escapeRsvpHtml(copy.message) + '</span>' + buildStayDetailsHtml(copy.details) + '</div>' +
       actionHtml +
       '</div>';
   }
@@ -650,7 +799,89 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  function getRsvpSectionCopy() {
+    var language = getRsvpLanguage();
+    var stay = getAllocatedStay();
+
+    if (stay) {
+      if (language === 'gu') {
+        return {
+          state: 'confirmed',
+          title: 'તમારી હાજરી પુષ્ટિ થઈ છે',
+          message: 'રૂમ ' + escapeRsvpHtml(stay.roomNumber) + '<br>ચેક-ઇન: ' + escapeRsvpHtml(stay.checkIn) + '<br>ચેક-આઉટ: ' + escapeRsvpHtml(stay.checkOut)
+        };
+      }
+
+      return {
+        state: 'confirmed',
+        title: 'Your Attendance Is Confirmed',
+        message: 'Room ' + escapeRsvpHtml(stay.roomNumber) + '<br>Check-in: ' + escapeRsvpHtml(stay.checkIn) + '<br>Check-out: ' + escapeRsvpHtml(stay.checkOut)
+      };
+    }
+
+    if (isRsvpClosed()) {
+      if (language === 'gu') {
+        return {
+          state: 'closed',
+          title: 'RSVP બંધ થઈ ગયું છે',
+          message: 'હાજરીમાં કોઈ ફેરફાર કરવો હોય તો કૃપા કરીને મનીષ કટીરાને <a href="tel:' + VP_RSVP_CONTACT.phoneHref + '">૭૦૨૮૦૨૮૧૯૪</a> પર કૉલ કરો.'
+        };
+      }
+
+      return {
+        state: 'closed',
+        title: 'RSVPs Are Closed',
+        message: 'Need to update your RSVP? Please call Manish Katira at <a href="tel:' + VP_RSVP_CONTACT.phoneHref + '">' + VP_RSVP_CONTACT.phoneDisplay + '</a>.'
+      };
+    }
+
+    if (language === 'gu') {
+      return {
+        state: 'open',
+        title: 'હાજરીની પુષ્ટિ કરો',
+        message: 'અમારી આનંદમય ઉજવણીની તૈયારીઓમાં મદદ કરવા માટે, કૃપા કરીને ૩૧ ઓગસ્ટ પહેલાં તમારી હાજરીની પુષ્ટિ કરો.'
+      };
+    }
+
+    return {
+      state: 'open',
+      title: 'Confirm Your Attendance',
+      message: 'To help us prepare for a joyful celebration, kindly RSVP before 31 August.'
+    };
+  }
+
+  function updateRsvpPresentation() {
+    var copy = getRsvpSectionCopy();
+    setManagedSectionState(copy.state);
+    setAttendanceSectionCopy(copy);
+    setAttendanceButtonVisible(copy.state === 'open');
+
+    if (popupDescription) {
+      popupDescription.textContent = getRsvpLanguage() === 'gu'
+        ? 'કૃપા કરીને ૩૧ ઓગસ્ટ પહેલાં RSVP કરો'
+        : 'Please RSVP before 31 August';
+    }
+  }
+
+  function renderPassivePopupState(data) {
+    var successBox = form.querySelector('.js-successbox');
+    var inputsBox = form.querySelector('.t-form__inputsbox');
+
+    if (successBox) {
+      successBox.style.display = 'block';
+      successBox.innerHTML = buildRsvpConfirmationHtml(data || getCurrentGuestDetail());
+    }
+    if (inputsBox) inputsBox.style.display = 'none';
+    setDeadlineMessageVisible(false);
+    setSuccessState(true);
+  }
+
   function restoreRsvpForm() {
+    if (isRsvpClosed() || getAllocatedStay()) {
+      renderPassivePopupState(getCurrentGuestDetail());
+      return;
+    }
+
     var successBox = form.querySelector('.js-successbox');
     var inputsBox = form.querySelector('.t-form__inputsbox');
 
@@ -663,18 +894,30 @@ document.addEventListener('DOMContentLoaded', function() {
     if (inputsBox) inputsBox.style.display = '';
     if (submitBtn) {
       submitBtn.disabled = false;
-      setSubmitText(getRsvpLanguage() === 'gu' ? 'મોકલો' : 'Submit');
+      setSubmitText(getRsvpLanguage() === 'gu' ? 'પુષ્ટિ કરો' : 'Confirm');
     }
 
     var selectedAvailability = form.querySelector('input.t-checkbox:checked');
-    var focusTarget = selectedAvailability || form.querySelector('input[name="Your name"]') || submitBtn;
+    var focusTarget = selectedAvailability || submitBtn;
     if (focusTarget && typeof focusTarget.focus === 'function') {
       focusTarget.focus();
     }
   }
 
+  function refreshRsvpPresentation() {
+    updateRsvpPresentation();
+    if (isRsvpClosed() || getAllocatedStay()) {
+      renderPassivePopupState(getCurrentGuestDetail());
+    }
+  }
+
+  window.vpUpdateRsvpPresentation = refreshRsvpPresentation;
+  document.addEventListener('digitalinvite:guest', refreshRsvpPresentation);
+
+  updateRsvpPresentation();
   setDeadlineMessageVisible(true);
   setSuccessState(false);
+  refreshRsvpPresentation();
 
   form.addEventListener('click', function(e) {
     var changeButton = e.target && e.target.closest ? e.target.closest('[data-rsvp-change]') : null;
@@ -685,47 +928,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
   form.addEventListener('submit', function(e) {
     e.preventDefault();
-    e.stopPropagation();
+    e.stopImmediatePropagation();
 
-    var name = ((form.querySelector('input[name="Your name"]') || {}).value || '').trim();
-    var selectedAvailability = form.querySelector('input.t-checkbox:checked');
-    var availabilityPayload = getAvailabilityPayload(selectedAvailability);
-    var availability = availabilityPayload.label;
-    var successBox = form.querySelector('.js-successbox');
-    var inputsBox = form.querySelector('.t-form__inputsbox');
-
-    if (!name || !availability) {
-      alert('Please enter your name and availability.');
+    if (isRsvpClosed()) {
+      renderPassivePopupState(getCurrentGuestDetail());
       return;
     }
 
-    if (VP_SHEET_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
-      if (successBox) {
-        successBox.style.display = 'block';
-        successBox.innerHTML = '<p>Please connect the Google Apps Script Web App URL in script.js before using RSVP.</p>';
-      }
+    var selectedAvailability = form.querySelector('input.t-checkbox:checked');
+    var availabilityPayload = getAvailabilityPayload(selectedAvailability);
+    var successBox = form.querySelector('.js-successbox');
+    var inputsBox = form.querySelector('.t-form__inputsbox');
+    var subdomain = resolveRsvpSubdomain();
+
+    if (!availabilityPayload.key) {
+      alert(getRsvpLanguage() === 'gu' ? 'કૃપા કરીને તમે આવશો કે નહીં તે પસંદ કરો.' : 'Please choose whether you will attend.');
+      return;
+    }
+
+    if (!subdomain) {
+      alert(getRsvpLanguage() === 'gu' ? 'લાઇવ RSVP માત્ર પ્રકાશિત આમંત્રણ પર ઉપલબ્ધ છે.' : 'Live RSVP is available only on the published invitation.');
       return;
     }
 
     if (successBox) successBox.style.display = 'none';
     if (submitBtn) {
       submitBtn.disabled = true;
-      setSubmitText('Sending...');
+      setSubmitText(getRsvpLanguage() === 'gu' ? 'મોકલી રહ્યા છીએ...' : 'Sending...');
     }
 
-    fetch(VP_SHEET_URL, {
+    fetch(VP_RSVP_API_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        timestamp: new Date().toISOString(),
-        name: name,
-        availability: availability,
-        availabilityKey: availabilityPayload.key
+        subdomain: subdomain,
+        name: getRsvpGuestName(),
+        attending: availabilityPayload.key === 'yes',
+        guestCount: 1,
+        message: availabilityPayload.key === 'no' ? 'Cannot attend' : ''
       })
     }).then(function(response) {
+      if (!response.ok) {
+        return response.json().catch(function() { return {}; }).then(function(payload) {
+          throw new Error(payload && payload.error ? payload.error : 'Failed to save RSVP.');
+        });
+      }
       return getBackendRsvpData(response, {
-        name: name,
-        availability: availability,
+        name: getRsvpGuestName(),
         availabilityKey: availabilityPayload.key
       });
     }).then(function(rsvpData){
@@ -736,14 +985,14 @@ document.addEventListener('DOMContentLoaded', function() {
       setDeadlineMessageVisible(false);
       if (inputsBox) inputsBox.style.display = 'none';
       setSuccessState(true);
-    }).catch(function(){
+    }).catch(function(error){
       if (submitBtn) {
         submitBtn.disabled = false;
-        setSubmitText(getRsvpLanguage() === 'gu' ? 'મોકલો' : 'Submit');
+        setSubmitText(getRsvpLanguage() === 'gu' ? 'પુષ્ટિ કરો' : 'Confirm');
       }
-      alert('Something went wrong. Please try again.');
+      alert((error && error.message) || (getRsvpLanguage() === 'gu' ? 'કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો.' : 'Something went wrong. Please try again.'));
     });
-  });
+  }, true);
 });
 
 var VP_EVENT_TIMELINE_CONTENT = {
@@ -1868,7 +2117,7 @@ function vpCanonicalDigitalInviteEventTitle(value) {
     return 'sangeet and cocktail night';
   }
 
-  if (normalized === 'shaadi night' || normalized === 'shadi' || normalized === 'shaadi' || normalized === 'wedding' || normalized === 'wedding night') {
+  if (normalized === 'shaddi night' || normalized === 'shaddi' || normalized === 'shaadi night' || normalized === 'shadi night' || normalized === 'shadi' || normalized === 'shaadi' || normalized === 'wedding' || normalized === 'wedding night') {
     return 'shadi night';
   }
 
@@ -2502,6 +2751,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     vpUpdateHeroScrollCueLanguage();
     vpApplyDigitalInviteGuestContext();
+    if (typeof window.vpUpdateRsvpPresentation === 'function') {
+      window.vpUpdateRsvpPresentation();
+    }
   }
 
   function setEnglish() {
@@ -2533,20 +2785,19 @@ document.addEventListener('DOMContentLoaded', function() {
     setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '7028028194', '+917028028194', 'Tap to call');
 
     setHtml('#rec2003860951 [field="tn_text_1763405219328"]', 'Confirm Your Attendance');
-    setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'To help us prepare for a joyful celebration, kindly confirm your attendance.');
+    setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'To help us prepare for a joyful celebration, kindly RSVP before 31 August.');
     setText('#rec2003860951 .tn-atom__button-text', 'Confirm Attendance');
 
     setText('#popuptitle_2052858183', 'Confirm Your Attendance');
-    setText('#rec2052858183 .t702__descr', 'Please RSVP before March 20');
-    setText('#field-title_5828866651120', 'Your name');
+    setText('#rec2052858183 .t702__descr', 'Please RSVP before 31 August');
     setText('#field-title_5828866651121', 'Will you come?');
     setTextAll('#rec2052858183 .t-checkboxes__item span', '');
-    setText('#rec2052858183 .t-checkboxes__item:nth-child(1) span', 'Yes, I will');
-    setText('#rec2052858183 .t-checkboxes__item:nth-child(2) span', 'Unfortunately, I cant :(');
+    setText('#rec2052858183 .t-checkboxes__item:nth-child(1) span', 'Yes, I will attend');
+    setText('#rec2052858183 .t-checkboxes__item:nth-child(2) span', "I can't attend");
     document.querySelectorAll('#rec2052858183 .t-checkbox').forEach(function(input, index) {
-      input.value = index === 0 ? 'Yes, I will' : 'Unfortunately, I cant :(';
+      input.value = index === 0 ? 'Yes, I will attend' : "I can't attend";
     });
-    setText('#rec2052858183 .t-btnflex__text', 'Submit');
+    setText('#rec2052858183 .t-btnflex__text', 'Confirm');
 
     setHtml('#rec2003869491 [field="tn_text_1763405219328"]', 'Hope to see you there!');
     setHtml('#rec2003869491 [field="tn_text_1772813849329000001"]', 'Palak and Shubham');
@@ -2582,19 +2833,18 @@ document.addEventListener('DOMContentLoaded', function() {
     setPhoneLink('#rec2003555721 [field="tn_text_1772822026012000002"]', '૭૦૨૮૦૨૮૧૯૪', '+917028028194', 'ટૅપ કરીને કૉલ કરો');
 
     setHtml('#rec2003860951 [field="tn_text_1763405219328"]', 'હાજરીની પુષ્ટિ કરો');
-    setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'અમારી આનંદમય ઉજવણીની તૈયારીઓમાં મદદ કરવા માટે, કૃપા કરીને તમારી હાજરીની પુષ્ટિ કરો.');
+    setHtml('#rec2003860951 [field="tn_text_1772813849329000001"]', 'અમારી આનંદમય ઉજવણીની તૈયારીઓમાં મદદ કરવા માટે, કૃપા કરીને ૩૧ ઓગસ્ટ પહેલાં તમારી હાજરીની પુષ્ટિ કરો.');
     setText('#rec2003860951 .tn-atom__button-text', 'હાજરીની પુષ્ટિ કરો');
 
     setText('#popuptitle_2052858183', 'હાજરીની પુષ્ટિ કરો');
-    setText('#rec2052858183 .t702__descr', 'કૃપા કરીને ૨૦ માર્ચ પહેલાં RSVP કરો');
-    setText('#field-title_5828866651120', 'તમારું નામ');
+    setText('#rec2052858183 .t702__descr', 'કૃપા કરીને ૩૧ ઓગસ્ટ પહેલાં RSVP કરો');
     setText('#field-title_5828866651121', 'શું તમે આવશો?');
     setText('#rec2052858183 .t-checkboxes__item:nth-child(1) span', 'હા, હું આવીશ');
     setText('#rec2052858183 .t-checkboxes__item:nth-child(2) span', 'દુર્ભાગ્યે, હું આવી શકતો નથી');
     document.querySelectorAll('#rec2052858183 .t-checkbox').forEach(function(input, index) {
       input.value = index === 0 ? 'હા, હું આવીશ' : 'દુર્ભાગ્યે, હું આવી શકતો નથી';
     });
-    setText('#rec2052858183 .t-btnflex__text', 'મોકલો');
+    setText('#rec2052858183 .t-btnflex__text', 'પુષ્ટિ કરો');
 
     setHtml('#rec2003869491 [field="tn_text_1763405219328"]', 'ત્યાં તમને જોવાની આશા છે!');
     setHtml('#rec2003869491 [field="tn_text_1772813849329000001"]', 'પલક અને શુભમ');
