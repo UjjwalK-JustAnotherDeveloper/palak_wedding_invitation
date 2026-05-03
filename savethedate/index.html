@@ -81,6 +81,10 @@
       background: var(--ruby);
     }
 
+    html {
+      scrollbar-gutter: stable;
+    }
+
     body {
       overflow-x: hidden;
       background:
@@ -101,7 +105,55 @@
       isolation: isolate;
       overflow-x: hidden;
       overflow-y: auto;
+      opacity: 1;
       padding: clamp(24px, 4vw, 46px) clamp(18px, 5vw, 72px) clamp(22px, 3.5vw, 40px);
+      transform: translateZ(0);
+      transition: opacity 780ms ease, filter 900ms ease, transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body.std-intro-active {
+      overflow: hidden;
+    }
+
+    body.std-intro-active .std-page {
+      opacity: 1;
+      filter: none;
+      pointer-events: none;
+      transform: translateZ(0);
+    }
+
+    body.std-intro-revealing .std-page {
+      opacity: 1;
+      filter: blur(0);
+      pointer-events: auto;
+      transform: translateZ(0);
+    }
+
+    body.std-intro-active .std-content {
+      opacity: 1;
+      transform: translateY(clamp(-48px, -5vh, -26px));
+      transition: opacity 480ms ease, transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body.std-page-ready .std-content {
+      opacity: 1;
+      transform: translateY(clamp(-48px, -5vh, -26px));
+      transition-delay: 120ms;
+    }
+
+    body.std-intro-active .std-content > :not(.std-home) {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      visibility: hidden;
+      transition: opacity 480ms ease, transform 620ms cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 480ms;
+    }
+
+    body.std-page-ready .std-content > :not(.std-home) {
+      opacity: 1;
+      transform: translateY(0);
+      visibility: visible;
+      transition-delay: 120ms, 120ms, 0s;
     }
 
     .std-photo {
@@ -246,7 +298,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: clamp(14px, 2.2vw, 28px);
+      gap: clamp(10px, 1.6vw, 22px);
       width: min(100%, 640px);
       margin-top: clamp(2px, 0.55vw, 8px);
     }
@@ -255,7 +307,9 @@
     .std-date-wrap::after {
       content: "";
       display: block;
-      width: clamp(42px, 9vw, 112px);
+      flex: 1 1 clamp(28px, 7vw, 96px);
+      min-width: 24px;
+      max-width: 112px;
       height: 1px;
       background: linear-gradient(90deg, rgba(255, 250, 248, 0), rgba(255, 250, 248, 0.54));
       box-shadow: 0 1px 10px rgba(255, 250, 248, 0.08);
@@ -269,11 +323,12 @@
       margin: 0;
       color: var(--ivory);
       font-family: "PTSerif", Georgia, serif;
-      font-size: clamp(58px, 8vw, 98px);
+      font-size: clamp(50px, 6.6vw, 84px);
       font-weight: 700;
       line-height: 0.98;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
       font-variant-numeric: lining-nums tabular-nums;
+      white-space: nowrap;
       text-shadow: 0 16px 34px rgba(36, 0, 10, 0.34);
     }
 
@@ -323,6 +378,147 @@
       font-size: clamp(20px, 2.25vw, 27px);
       line-height: 1;
       font-variant-numeric: lining-nums tabular-nums;
+    }
+
+    .std-intro {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: clamp(22px, 5vw, 58px);
+      background: transparent;
+      cursor: default;
+      transition: opacity 640ms ease, visibility 640ms ease;
+    }
+
+    .std-intro::before,
+    .std-intro::after {
+      content: "";
+      position: absolute;
+      inset: clamp(16px, 3vw, 34px);
+      pointer-events: none;
+    }
+
+    .std-intro::before {
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(255, 250, 248, 0.18), rgba(255, 250, 248, 0) 38%),
+        radial-gradient(circle at 50% 68%, rgba(203, 161, 90, 0.16), rgba(203, 161, 90, 0) 34%),
+        linear-gradient(135deg, #3d0112 0%, #66021f 44%, #4b0317 100%);
+      opacity: 1;
+      transition: opacity 620ms ease;
+    }
+
+    .std-intro::after {
+      border: 1px solid rgba(255, 250, 248, 0.18);
+      box-shadow: inset 0 0 74px rgba(36, 0, 10, 0.24);
+    }
+
+    .std-intro-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      justify-items: center;
+      width: min(100%, 680px);
+      text-align: center;
+      transition: opacity 260ms ease;
+    }
+
+    .std-intro-lottie {
+      width: clamp(305px, 58vmin, 580px);
+      max-width: 100%;
+      aspect-ratio: 1;
+      filter: drop-shadow(0 22px 34px rgba(36, 0, 10, 0.3));
+      transform: translateZ(0);
+      transition: filter 360ms ease, opacity 360ms ease, transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .std-intro-title {
+      margin: clamp(-18px, -2vw, -6px) 0 0;
+      color: rgba(255, 250, 248, 0.92);
+      font-family: "GoodVibrationsScript", cursive;
+      font-size: clamp(50px, 9vw, 92px);
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: 0;
+      text-shadow: 0 16px 32px rgba(36, 0, 10, 0.28);
+      transition: opacity 220ms ease, transform 280ms ease;
+    }
+
+    .std-intro-button {
+      min-height: 44px;
+      margin-top: clamp(18px, 3vw, 28px);
+      padding: 0 22px;
+      border: 1px solid rgba(255, 250, 248, 0.34);
+      border-radius: 999px;
+      background: rgba(255, 250, 248, 0.12);
+      color: var(--ivory);
+      cursor: pointer;
+      font-family: "PTSerif", Georgia, serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      text-transform: uppercase;
+      transform: translateY(8px);
+      transition: opacity 240ms ease, transform 240ms ease, background-color 180ms ease, border-color 180ms ease;
+    }
+
+    .std-intro-button:hover,
+    .std-intro-button:focus-visible {
+      border-color: rgba(203, 161, 90, 0.82);
+      background: rgba(203, 161, 90, 0.16);
+      outline: none;
+    }
+
+    .std-intro-button:disabled {
+      cursor: default;
+    }
+
+    body.std-intro-ready .std-intro-button {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .std-intro.std-intro--revealing {
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .std-intro.std-intro--revealing::before {
+      opacity: 0.52;
+    }
+
+    .std-intro.std-intro--revealing .std-intro-title,
+    .std-intro.std-intro--revealing .std-intro-button {
+      opacity: 0;
+      transform: translateY(6px);
+      visibility: hidden;
+    }
+
+    .std-intro.std-intro--revealing .std-intro-lottie {
+      filter: drop-shadow(0 14px 24px rgba(36, 0, 10, 0.24));
+      transform: scale(0.985);
+    }
+
+    .std-intro.std-intro--exiting {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .std-intro.std-intro--exiting::before {
+      opacity: 0;
+    }
+
+    .std-intro.std-intro--exiting .std-intro-lottie {
+      opacity: 0;
+      transform: scale(0.96);
     }
 
     @media (max-width: 720px) {
@@ -388,6 +584,16 @@
         transform: none;
       }
 
+      body.std-intro-active .std-content {
+        opacity: 1;
+        transform: none;
+      }
+
+      body.std-page-ready .std-content {
+        opacity: 1;
+        transform: none;
+      }
+
       .std-names {
         gap: 4px;
         margin-top: clamp(150px, 19vh, 170px);
@@ -401,19 +607,20 @@
       }
 
       .std-date-wrap {
-        gap: 10px;
-        max-width: 330px;
+        gap: 8px;
+        max-width: 340px;
         margin-top: 3px;
       }
 
       .std-date-wrap::before,
       .std-date-wrap::after {
-        width: clamp(18px, 6vw, 26px);
+        flex-basis: clamp(14px, 5vw, 22px);
+        min-width: 12px;
       }
 
       .std-date {
-        font-size: clamp(46px, 12vw, 54px);
-        letter-spacing: 0.025em;
+        font-size: clamp(38px, 10.3vw, 46px);
+        letter-spacing: 0.015em;
       }
 
       .std-countdown {
@@ -474,7 +681,7 @@
       }
 
       .std-date {
-        font-size: 44px;
+        font-size: 40px;
       }
     }
 
@@ -503,14 +710,64 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      body.std-intro-active {
+        overflow: auto;
+      }
+
+      body.std-intro-active .std-page {
+        opacity: 1;
+        filter: none;
+        transform: none;
+      }
+
+      body.std-intro-active .std-content,
+      body.std-page-ready .std-content {
+        opacity: 1;
+        transform: none;
+      }
+
+      .std-intro {
+        display: none;
+      }
+
       .std-typewriter-cursor {
         animation: none;
         opacity: 0;
       }
     }
   </style>
+  <noscript>
+    <style>
+      .std-intro {
+        display: none;
+      }
+
+      body.std-intro-active {
+        overflow: auto;
+      }
+
+      body.std-intro-active .std-page {
+        opacity: 1;
+        filter: none;
+        transform: none;
+      }
+
+      body.std-intro-active .std-content,
+      body.std-page-ready .std-content {
+        opacity: 1;
+        transform: none;
+      }
+    </style>
+  </noscript>
 </head>
-<body>
+<body class="std-intro-active">
+  <div class="std-intro" id="std-intro">
+    <div class="std-intro-inner">
+      <div class="std-intro-lottie" id="std-couple-walk" aria-hidden="true"></div>
+      <p class="std-intro-title">Palak &amp; Shubham</p>
+      <button class="std-intro-button" id="std-intro-button" type="button" disabled>Reveal the Date</button>
+    </div>
+  </div>
   <main class="std-page">
     <img class="std-photo" src="../assets/images/e8174740-094c-4a9c-a832-f90406e5a4b1.jpg" alt="Palak and Shubham together" loading="eager" decoding="async">
     <div class="std-shell">
@@ -525,7 +782,7 @@
           <span class="std-name-line" aria-hidden="true">Shubham</span>
         </h1>
         <div class="std-date-wrap" aria-label="Wedding date">
-          <p class="std-date">20.11.26</p>
+          <p class="std-date">20.11.2026</p>
         </div>
 
         <div class="std-countdown" aria-label="Countdown to the wedding">
@@ -553,7 +810,169 @@
     </div>
   </main>
 
+  <script src="../assets/vendor/lottie.min.js"></script>
   <script>
+    (function() {
+      var intro = document.getElementById("std-intro");
+      var lottieContainer = document.getElementById("std-couple-walk");
+      var button = document.getElementById("std-intro-button");
+      var prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var firstSegment = [0, 159];
+      var exitSegment = [159, 239];
+      var phase = "loading";
+      var revealStarted = false;
+      var pageIsLoaded = document.readyState === "complete";
+      var lottieIsReady = false;
+      var introHasStarted = false;
+      var firstSegmentTimer;
+      var fallbackTimer;
+      var animation;
+
+      if (!intro || !lottieContainer || prefersReducedMotion) {
+        revealPage();
+        return;
+      }
+
+      function revealPage() {
+        document.body.classList.remove("std-intro-active", "std-intro-ready", "std-intro-revealing", "std-page-ready");
+        if (intro) {
+          intro.remove();
+        }
+      }
+
+      function finishReveal() {
+        window.clearTimeout(fallbackTimer);
+        intro.classList.add("std-intro--exiting");
+        document.body.classList.add("std-intro-revealing", "std-page-ready");
+        window.setTimeout(revealPage, 680);
+      }
+
+      function holdIntro() {
+        if (revealStarted || phase === "hold") return;
+
+        window.clearTimeout(firstSegmentTimer);
+        phase = "hold";
+
+        if (animation && typeof animation.goToAndStop === "function") {
+          animation.goToAndStop(firstSegment[1], true);
+        }
+
+        document.body.classList.add("std-intro-ready");
+        if (button) {
+          button.disabled = false;
+        }
+      }
+
+      function startIntroWhenReady() {
+        if (!pageIsLoaded || !lottieIsReady || introHasStarted || revealStarted) return;
+
+        introHasStarted = true;
+        phase = "intro";
+
+        if (animation && typeof animation.goToAndStop === "function") {
+          animation.goToAndStop(firstSegment[0], true);
+        }
+
+        window.requestAnimationFrame(function() {
+          if (revealStarted || phase !== "intro") return;
+
+          animation.playSegments(firstSegment, true);
+          firstSegmentTimer = window.setTimeout(holdIntro, 5300);
+        });
+      }
+
+      function markPageLoaded() {
+        pageIsLoaded = true;
+        startIntroWhenReady();
+      }
+
+      function beginReveal() {
+        if (revealStarted) return;
+        revealStarted = true;
+        window.clearTimeout(firstSegmentTimer);
+        phase = "exit";
+        intro.classList.add("std-intro--revealing");
+        document.body.classList.remove("std-intro-ready");
+        if (button) {
+          button.disabled = true;
+        }
+
+        if (animation && typeof animation.playSegments === "function") {
+          animation.playSegments(exitSegment, true);
+          fallbackTimer = window.setTimeout(finishReveal, 3600);
+          return;
+        }
+
+        finishReveal();
+      }
+
+      function requestReveal(event) {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+
+        if (phase !== "hold" || (button && button.disabled)) return;
+
+        beginReveal();
+        document.dispatchEvent(new CustomEvent("std:reveal-date"));
+      }
+
+      if (button) {
+        button.addEventListener("click", requestReveal);
+      }
+
+      if (!window.lottie || typeof window.lottie.loadAnimation !== "function") {
+        revealPage();
+        return;
+      }
+
+      animation = window.lottie.loadAnimation({
+        container: lottieContainer,
+        renderer: "svg",
+        loop: false,
+        autoplay: false,
+        path: "../assets/lottie/couple-walk-intro.json",
+        rendererSettings: {
+          preserveAspectRatio: "xMidYMid meet",
+          progressiveLoad: false
+        }
+      });
+
+      if (typeof animation.setSubframe === "function") {
+        animation.setSubframe(false);
+      }
+
+      animation.addEventListener("DOMLoaded", function() {
+        lottieIsReady = true;
+
+        if (typeof animation.goToAndStop === "function") {
+          animation.goToAndStop(firstSegment[0], true);
+        }
+
+        startIntroWhenReady();
+      });
+
+      animation.addEventListener("complete", function() {
+        if (phase === "intro") {
+          holdIntro();
+          return;
+        }
+
+        if (phase === "exit") {
+          finishReveal();
+        }
+      });
+
+      animation.addEventListener("data_failed", revealPage);
+
+      if (pageIsLoaded) {
+        startIntroWhenReady();
+      } else {
+        window.addEventListener("load", markPageLoaded, { once: true });
+      }
+    })();
+
     (function() {
       var target = new Date("2026-11-20T00:00:00+05:30").getTime();
       var elements = {
@@ -655,19 +1074,19 @@
       var MUSIC_URL = "../assets/music/Mere Sohneya __ Kabir singh __ Flute cover __ Santosh Naik and Swapnil Sonar.mp3";
       var MUSIC_START_SECONDS = 5;
       var MUSIC_VOLUME = 0.28;
+      var MUSIC_FADE_START_VOLUME = 0.04;
+      var MUSIC_FADE_DURATION = 5000;
       var backgroundAudio = new Audio(MUSIC_URL);
       var backgroundAudioHasStarted = false;
-      var backgroundAudioNeedsUnmute = false;
       var backgroundAudioPlayPending = false;
-      var backgroundAudioMutedFallbackTried = false;
-      var backgroundAudioAutoplayBlocked = false;
+      var volumeFadeFrame;
       var mediaSessionReady = false;
 
       backgroundAudio.loop = false;
       backgroundAudio.preload = "auto";
-      backgroundAudio.autoplay = true;
+      backgroundAudio.autoplay = false;
       backgroundAudio.muted = false;
-      backgroundAudio.volume = MUSIC_VOLUME;
+      backgroundAudio.volume = MUSIC_FADE_START_VOLUME;
 
       function seekBackgroundAudioToStart() {
         try {
@@ -675,6 +1094,45 @@
             backgroundAudio.currentTime = MUSIC_START_SECONDS;
           }
         } catch (error) {}
+      }
+
+      function cancelVolumeFade() {
+        if (!volumeFadeFrame) return;
+
+        window.cancelAnimationFrame(volumeFadeFrame);
+        volumeFadeFrame = null;
+      }
+
+      function fadeBackgroundAudioVolume() {
+        cancelVolumeFade();
+
+        if (!window.requestAnimationFrame) {
+          backgroundAudio.volume = MUSIC_VOLUME;
+          return;
+        }
+
+        var startVolume = Math.max(0, Math.min(MUSIC_VOLUME, backgroundAudio.volume || MUSIC_FADE_START_VOLUME));
+        var startTime = window.performance && typeof window.performance.now === "function"
+          ? window.performance.now()
+          : Date.now();
+
+        function step(timestamp) {
+          var now = typeof timestamp === "number" ? timestamp : Date.now();
+          var progress = Math.min(Math.max((now - startTime) / MUSIC_FADE_DURATION, 0), 1);
+          var easedProgress = 1 - Math.pow(1 - progress, 3);
+
+          backgroundAudio.volume = startVolume + ((MUSIC_VOLUME - startVolume) * easedProgress);
+
+          if (progress < 1 && !backgroundAudio.paused) {
+            volumeFadeFrame = window.requestAnimationFrame(step);
+            return;
+          }
+
+          backgroundAudio.volume = MUSIC_VOLUME;
+          volumeFadeFrame = null;
+        }
+
+        volumeFadeFrame = window.requestAnimationFrame(step);
       }
 
       function syncMediaSessionState() {
@@ -728,16 +1186,20 @@
       function startBackgroundAudio(options) {
         var shouldRestart = options && options.restart === true;
         var forceAudible = options && options.forceAudible === true;
-        var allowMutedFallback = options && options.allowMutedFallback === true;
+        var fadeIn = options && options.fadeIn === true;
+
+        cancelVolumeFade();
 
         if (forceAudible) {
           backgroundAudio.muted = false;
-          backgroundAudio.volume = MUSIC_VOLUME;
-          backgroundAudioNeedsUnmute = false;
         }
 
         if (backgroundAudioPlayPending) {
           return Promise.resolve();
+        }
+
+        if (!backgroundAudio.muted) {
+          backgroundAudio.volume = fadeIn ? MUSIC_FADE_START_VOLUME : MUSIC_VOLUME;
         }
 
         if (shouldRestart || backgroundAudio.currentTime < MUSIC_START_SECONDS) {
@@ -753,10 +1215,13 @@
           return playRequest.then(function() {
             backgroundAudioHasStarted = true;
             backgroundAudioPlayPending = false;
-            backgroundAudioAutoplayBlocked = false;
 
             if (!backgroundAudio.muted) {
-              removeStartListeners();
+              if (fadeIn) {
+                fadeBackgroundAudioVolume();
+              } else {
+                backgroundAudio.volume = MUSIC_VOLUME;
+              }
             }
 
             syncMediaSessionState();
@@ -764,60 +1229,26 @@
             backgroundAudioHasStarted = false;
             backgroundAudioPlayPending = false;
 
-            if (allowMutedFallback && !backgroundAudioMutedFallbackTried && !forceAudible) {
-              return startMutedBackgroundAudio();
-            }
-
-            if (allowMutedFallback) {
-              backgroundAudioAutoplayBlocked = true;
-            }
-
-            console.warn("Background audio could not start automatically.", error);
+            console.warn("Background audio could not start after reveal.", error);
           });
         }
 
         backgroundAudioHasStarted = true;
         backgroundAudioPlayPending = false;
-        removeStartListeners();
-        syncMediaSessionState();
-        return Promise.resolve();
-      }
-
-      function startMutedBackgroundAudio() {
-        backgroundAudioMutedFallbackTried = true;
-        backgroundAudioNeedsUnmute = true;
-        backgroundAudio.muted = true;
-
-        if (backgroundAudio.currentTime < MUSIC_START_SECONDS) {
-          seekBackgroundAudioToStart();
+        if (!backgroundAudio.muted) {
+          if (fadeIn) {
+            fadeBackgroundAudioVolume();
+          } else {
+            backgroundAudio.volume = MUSIC_VOLUME;
+          }
         }
-
-        backgroundAudioPlayPending = true;
-        var mutedPlayRequest = backgroundAudio.play();
-
-        if (mutedPlayRequest && typeof mutedPlayRequest.then === "function") {
-          return mutedPlayRequest.then(function() {
-            backgroundAudioHasStarted = true;
-            backgroundAudioPlayPending = false;
-            backgroundAudioAutoplayBlocked = false;
-            syncMediaSessionState();
-          }).catch(function(error) {
-            backgroundAudioHasStarted = false;
-            backgroundAudioNeedsUnmute = false;
-            backgroundAudioPlayPending = false;
-            backgroundAudioAutoplayBlocked = true;
-            backgroundAudio.muted = false;
-            console.warn("Background audio could not start muted.", error);
-          });
-        }
-
-        backgroundAudioHasStarted = true;
-        backgroundAudioPlayPending = false;
         syncMediaSessionState();
         return Promise.resolve();
       }
 
       function pauseBackgroundAudio() {
+        cancelVolumeFade();
+
         if (!backgroundAudio.paused) {
           backgroundAudio.pause();
         }
@@ -825,40 +1256,8 @@
         syncMediaSessionState();
       }
 
-      var passiveStartOptions = { capture: true, passive: true };
-      var activeStartOptions = { capture: true };
-      var startEvents = [
-        { type: "pointerdown", options: passiveStartOptions },
-        { type: "pointerup", options: passiveStartOptions },
-        { type: "touchstart", options: passiveStartOptions },
-        { type: "touchend", options: passiveStartOptions },
-        { type: "mousedown", options: passiveStartOptions },
-        { type: "mouseup", options: passiveStartOptions },
-        { type: "click", options: passiveStartOptions },
-        { type: "keydown", options: activeStartOptions }
-      ];
-
-      function addStartListeners() {
-        startEvents.forEach(function(eventConfig) {
-          window.addEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
-          document.addEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
-        });
-      }
-
-      function removeStartListeners() {
-        startEvents.forEach(function(eventConfig) {
-          window.removeEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
-          document.removeEventListener(eventConfig.type, handleFirstInteraction, eventConfig.options);
-        });
-      }
-
-      function handleFirstInteraction() {
-        startBackgroundAudio({ restart: !backgroundAudioHasStarted, forceAudible: true });
-      }
-
-      function attemptPageLoadAutoplay() {
-        if (backgroundAudioHasStarted || backgroundAudioAutoplayBlocked || document.hidden) return;
-        startBackgroundAudio({ restart: true, allowMutedFallback: true });
+      function handleRevealDateAudio() {
+        startBackgroundAudio({ restart: !backgroundAudioHasStarted, forceAudible: true, fadeIn: true });
       }
 
       backgroundAudio.addEventListener("loadedmetadata", seekBackgroundAudioToStart);
@@ -875,27 +1274,21 @@
       });
 
       registerMediaSession();
-      addStartListeners();
+      document.addEventListener("std:reveal-date", handleRevealDateAudio);
 
       try {
         backgroundAudio.load();
       } catch (error) {}
 
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", attemptPageLoadAutoplay, { once: true });
-      } else {
-        window.setTimeout(attemptPageLoadAutoplay, 0);
-      }
-
-      window.addEventListener("load", attemptPageLoadAutoplay, { once: true });
-      window.addEventListener("pageshow", attemptPageLoadAutoplay);
       document.addEventListener("visibilitychange", function() {
         if (document.hidden) {
           pauseBackgroundAudio();
           return;
         }
 
-        attemptPageLoadAutoplay();
+        if (backgroundAudioHasStarted) {
+          startBackgroundAudio();
+        }
       });
       window.addEventListener("pagehide", pauseBackgroundAudio);
     })();
